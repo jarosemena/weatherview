@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GlobalStyles } from './theme/GlobalStyles';
 import { theme } from './theme/theme';
 import { WeatherProvider } from './context/WeatherContext';
+import { PreferencesProvider } from './context/PreferencesContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,15 +18,17 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <GlobalStyles />
-        <WeatherProvider>
-          <div>
-            <h1>Weather Data Visualizer</h1>
-            <p>Dashboard coming soon...</p>
-          </div>
-        </WeatherProvider>
-      </ThemeProvider>
+      <PreferencesProvider>
+        <ThemeProvider theme={theme}>
+          <GlobalStyles />
+          <WeatherProvider>
+            <div>
+              <h1>Weather Data Visualizer</h1>
+              <p>Dashboard coming soon...</p>
+            </div>
+          </WeatherProvider>
+        </ThemeProvider>
+      </PreferencesProvider>
     </QueryClientProvider>
   );
 }

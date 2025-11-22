@@ -23,6 +23,9 @@ function App() {
       <PreferencesProvider>
         <ThemeProvider theme={theme}>
           <GlobalStyles />
+          <a href="#main-content" className="skip-link">
+            Skip to main content
+          </a>
           <ToastProvider>
             <WeatherProvider>
               <Dashboard />

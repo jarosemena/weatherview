@@ -280,7 +280,7 @@ async function getForecast(city: string, days: number): Promise<ForecastData[]> 
 
     const cityData = geoResponse.data.results[0];
     
-    // Get forecast data
+    // Get forecast data (Open-Meteo provides 7 days by default in free tier)
     const weatherResponse = await retryRequest(() =>
       axios.get<OpenMeteoWeatherResponse>(`${WEATHER_BASE_URL}/forecast`, {
         params: {
@@ -288,14 +288,14 @@ async function getForecast(city: string, days: number): Promise<ForecastData[]> 
           longitude: cityData.longitude,
           current: 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl',
           daily: 'temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant',
-          timezone: 'auto',
-          forecast_days: days
+          timezone: 'auto'
         }
       })
     );
 
     return transformForecastData(weatherResponse.data);
   } catch (error) {
+    console.error('Error fetching forecast:', error);
     throw new Error('Failed to fetch forecast data');
   }
 }

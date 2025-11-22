@@ -175,14 +175,16 @@ async function getCurrentWeather(city: string): Promise<WeatherData> {
     const geoResponse = await axios.get<GeoResponse>(`${GEO_URL}/search`, {
       params: {
         name: city,
-        count: 1,
+        count: 3, // Get top 3 results to have fallback options
         language: 'en',
         format: 'json'
       }
     });
 
     if (!geoResponse.data.results || geoResponse.data.results.length === 0) {
-      throw new Error('City not found');
+      console.warn(`City "${city}" not found, using default city`);
+      // Fallback to a default city
+      return await getCurrentWeather('London');
     }
 
     const cityData = geoResponse.data.results[0];
@@ -202,10 +204,20 @@ async function getCurrentWeather(city: string): Promise<WeatherData> {
 
     return transformWeatherData(weatherResponse.data, cityData.name, cityData.country);
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 404) {
-      throw new Error('City not found');
+    console.error(`Error fetching weather for "${city}":`, error);
+    
+    // If this is already a fallback to London, throw the error
+    if (city.toLowerCase() === 'london') {
+      throw new Error('Failed to fetch weather data');
     }
-    throw new Error('Failed to fetch weather data');
+    
+    // Otherwise, try London as fallback
+    console.log('Trying fallback city: London');
+    try {
+      return await getCurrentWeather('London');
+    } catch (fallbackError) {
+      throw new Error('Failed to fetch weather data');
+    }
   }
 }
 
@@ -214,7 +226,7 @@ async function getCurrentWeatherByCoords(
   lon: number
 ): Promise<WeatherData> {
   try {
-    // First, get weather data
+    // First, try to get weather data for exact coordinates
     const weatherResponse = await retryRequest(() =>
       axios.get<OpenMeteoWeatherResponse>(`${WEATHER_BASE_URL}/forecast`, {
         params: {
@@ -227,9 +239,10 @@ async function getCurrentWeatherByCoords(
       })
     );
 
-    // Try to get city name from reverse geocoding using a different service
+    // Try to get city name from reverse geocoding
     let cityName = 'Current Location';
     let country = '';
+    let countryName = '';
     
     try {
       // Use Nominatim for reverse geocoding (free, no API key)
@@ -247,18 +260,54 @@ async function getCurrentWeatherByCoords(
 
       if (reverseGeoResponse.data && reverseGeoResponse.data.address) {
         const address = reverseGeoResponse.data.address;
-        cityName = address.city || address.town || address.village || address.county || 'Current Location';
+        cityName = address.city || address.town || address.village || address.county || address.state || 'Current Location';
         country = address.country_code?.toUpperCase() || '';
+        countryName = address.country || '';
       }
     } catch (geoError) {
-      // If reverse geocoding fails, continue with default values
       console.warn('Reverse geocoding failed, using default location name');
     }
 
     return transformWeatherData(weatherResponse.data, cityName, country);
   } catch (error) {
-    console.error('Error fetching weather by coordinates:', error);
-    throw new Error('Failed to fetch weather data by coordinates');
+    console.error('Error fetching weather by exact coordinates, trying fallback...', error);
+    
+    // Fallback: Try to get nearest city or country capital
+    try {
+      // Get reverse geocoding to find country
+      const reverseGeoResponse = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+        params: {
+          lat,
+          lon,
+          format: 'json',
+          'accept-language': 'en'
+        },
+        headers: {
+          'User-Agent': 'WeatherDataVisualizer/1.0'
+        }
+      });
+
+      if (reverseGeoResponse.data && reverseGeoResponse.data.address) {
+        const address = reverseGeoResponse.data.address;
+        const countryName = address.country || '';
+        const stateName = address.state || '';
+        
+        // Try to find a nearby city or use capital
+        let fallbackCity = address.city || address.town || address.state || countryName;
+        
+        if (fallbackCity) {
+          console.log(`Using fallback location: ${fallbackCity}`);
+          return await getCurrentWeather(fallbackCity);
+        }
+      }
+      
+      // Last resort: use a default city
+      console.log('Using default fallback: London');
+      return await getCurrentWeather('London');
+    } catch (fallbackError) {
+      console.error('Fallback also failed:', fallbackError);
+      throw new Error('Failed to fetch weather data by coordinates');
+    }
   }
 }
 
@@ -268,14 +317,16 @@ async function getForecast(city: string, days: number): Promise<ForecastData[]> 
     const geoResponse = await axios.get<GeoResponse>(`${GEO_URL}/search`, {
       params: {
         name: city,
-        count: 1,
+        count: 3, // Get top 3 results for fallback
         language: 'en',
         format: 'json'
       }
     });
 
     if (!geoResponse.data.results || geoResponse.data.results.length === 0) {
-      throw new Error('City not found');
+      console.warn(`City "${city}" not found for forecast, using default`);
+      // Return empty forecast instead of failing
+      return [];
     }
 
     const cityData = geoResponse.data.results[0];
@@ -295,8 +346,9 @@ async function getForecast(city: string, days: number): Promise<ForecastData[]> 
 
     return transformForecastData(weatherResponse.data);
   } catch (error) {
-    console.error('Error fetching forecast:', error);
-    throw new Error('Failed to fetch forecast data');
+    console.error(`Error fetching forecast for "${city}":`, error);
+    // Return empty array instead of throwing to prevent app crash
+    return [];
   }
 }
 

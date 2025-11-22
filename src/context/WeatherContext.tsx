@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { weatherApi } from '../services/weatherApi';
+import { getErrorMessage } from '../utils/retryWithBackoff';
 import type { WeatherData, ForecastData } from '../types/weather.types';
 
 interface WeatherContextValue {
@@ -8,6 +9,8 @@ interface WeatherContextValue {
   forecast: ForecastData[];
   isLoading: boolean;
   error: Error | null;
+  errorMessage: string | null;
+  isUsingCache: boolean;
   fetchWeatherByCity: (city: string) => Promise<void>;
   fetchWeatherByCoords: (lat: number, lon: number) => Promise<void>;
   refetch: () => void;
@@ -22,6 +25,7 @@ interface WeatherProviderProps {
 export function WeatherProvider({ children }: WeatherProviderProps) {
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [isUsingCache, setIsUsingCache] = useState(false);
   const queryClient = useQueryClient();
 
   // Query for current weather
@@ -29,7 +33,9 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
     data: currentWeather = null,
     isLoading: isLoadingWeather,
     error: weatherError,
-    refetch: refetchWeather
+    refetch: refetchWeather,
+    isError: isWeatherError,
+    isFetching: isFetchingWeather
   } = useQuery({
     queryKey: ['weather', currentCity, currentCoords],
     queryFn: async () => {
@@ -43,7 +49,10 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
     },
     enabled: !!(currentCity || currentCoords),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000 // 10 minutes (formerly cacheTime)
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    retry: false, // We handle retries in the API layer
+    // Use cached data on error
+    placeholderData: (previousData) => previousData
   });
 
   // Query for forecast
@@ -51,7 +60,8 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
     data: forecast = [],
     isLoading: isLoadingForecast,
     error: forecastError,
-    refetch: refetchForecast
+    refetch: refetchForecast,
+    isError: isForecastError
   } = useQuery({
     queryKey: ['forecast', currentWeather?.city],
     queryFn: async () => {
@@ -62,8 +72,19 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
     },
     enabled: !!currentWeather?.city,
     staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000
+    gcTime: 10 * 60 * 1000,
+    retry: false,
+    placeholderData: (previousData) => previousData
   });
+
+  // Track if we're using cached data
+  useEffect(() => {
+    if (isWeatherError && currentWeather) {
+      setIsUsingCache(true);
+    } else if (!isFetchingWeather && !isWeatherError) {
+      setIsUsingCache(false);
+    }
+  }, [isWeatherError, currentWeather, isFetchingWeather]);
 
   const fetchWeatherByCity = useCallback(async (city: string) => {
     setCurrentCity(city);
@@ -80,11 +101,16 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
     refetchForecast();
   }, [refetchWeather, refetchForecast]);
 
+  const error = (weatherError || forecastError) as Error | null;
+  const errorMessage = error ? getErrorMessage(error) : null;
+
   const value: WeatherContextValue = {
     currentWeather,
     forecast,
     isLoading: isLoadingWeather || isLoadingForecast,
-    error: (weatherError || forecastError) as Error | null,
+    error,
+    errorMessage,
+    isUsingCache,
     fetchWeatherByCity,
     fetchWeatherByCoords,
     refetch

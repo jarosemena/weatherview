@@ -253,3 +253,63 @@ export const EmptyFavorites = styled.p`
   padding: ${({ theme }) => theme.spacing.lg} 0;
   margin: 0;
 `;
+
+
+export const ChartSection = styled.section`
+  margin-top: ${({ theme }) => theme.spacing.xl};
+`;
+
+export const ChartControls = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  flex-wrap: wrap;
+`;
+
+export const ControlGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+export const ControlLabel = styled.label`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+export const ButtonGroup = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.xs};
+  background: ${({ theme }) => theme.colors.background.main};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing.xs};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+`;
+
+export const ControlButton = styled.button<{ $active: boolean }>`
+  background: ${({ theme, $active }) => 
+    $active ? theme.colors.primary : 'transparent'};
+  color: ${({ theme, $active }) => 
+    $active ? 'white' : theme.colors.text.primary};
+  border: none;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: ${({ theme, $active }) => 
+      $active ? theme.colors.primary : theme.colors.background.secondary};
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;

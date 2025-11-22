@@ -4,19 +4,22 @@ import { useGeolocation } from '../../hooks/useGeolocation';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
-import type { City } from '../../types/weather.types';
+import { ChartView } from '../ChartView/ChartView';
+import type { City, ChartType, TimeRange } from '../../types/weather.types';
 import * as S from './Dashboard.styles';
 
 const DEFAULT_CITY = 'London';
 const MAX_RECENT_SEARCHES = 5;
 
 export function Dashboard() {
-  const { currentWeather, isLoading: isWeatherLoading, error: weatherError, fetchWeatherByCity, fetchWeatherByCoords } = useWeatherData();
+  const { currentWeather, forecast, isLoading: isWeatherLoading, error: weatherError, fetchWeatherByCity, fetchWeatherByCoords } = useWeatherData();
   const { coordinates, isLoading: isGeoLoading, error: geoError, requestLocation } = useGeolocation();
   const { temperatureUnit, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit } = useUserPreferences();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [chartType, setChartType] = useState<ChartType>('temperature');
+  const [timeRange, setTimeRange] = useState<TimeRange>('7d');
 
   // Request geolocation on mount
   useEffect(() => {
@@ -123,15 +126,77 @@ export function Dashboard() {
             )}
 
             {!isLoading && !hasError && currentWeather && (
-              <S.WeatherSection>
-                <WeatherCard
-                  city={currentWeather.city}
-                  weatherData={currentWeather}
-                  unit={temperatureUnit}
-                  onFavoriteToggle={() => handleFavoriteToggle(currentWeather.city)}
-                  isFavorite={isFavorite(currentWeather.city)}
-                />
-              </S.WeatherSection>
+              <>
+                <S.WeatherSection>
+                  <WeatherCard
+                    city={currentWeather.city}
+                    weatherData={currentWeather}
+                    unit={temperatureUnit}
+                    onFavoriteToggle={() => handleFavoriteToggle(currentWeather.city)}
+                    isFavorite={isFavorite(currentWeather.city)}
+                  />
+                </S.WeatherSection>
+
+                {forecast.length > 0 && (
+                  <S.ChartSection>
+                    <S.ChartControls>
+                      <S.ControlGroup>
+                        <S.ControlLabel>Chart Type</S.ControlLabel>
+                        <S.ButtonGroup>
+                          <S.ControlButton
+                            $active={chartType === 'temperature'}
+                            onClick={() => setChartType('temperature')}
+                          >
+                            Temperature
+                          </S.ControlButton>
+                          <S.ControlButton
+                            $active={chartType === 'precipitation'}
+                            onClick={() => setChartType('precipitation')}
+                          >
+                            Precipitation
+                          </S.ControlButton>
+                          <S.ControlButton
+                            $active={chartType === 'wind'}
+                            onClick={() => setChartType('wind')}
+                          >
+                            Wind
+                          </S.ControlButton>
+                        </S.ButtonGroup>
+                      </S.ControlGroup>
+
+                      <S.ControlGroup>
+                        <S.ControlLabel>Time Range</S.ControlLabel>
+                        <S.ButtonGroup>
+                          <S.ControlButton
+                            $active={timeRange === '24h'}
+                            onClick={() => setTimeRange('24h')}
+                          >
+                            24h
+                          </S.ControlButton>
+                          <S.ControlButton
+                            $active={timeRange === '7d'}
+                            onClick={() => setTimeRange('7d')}
+                          >
+                            7d
+                          </S.ControlButton>
+                          <S.ControlButton
+                            $active={timeRange === '30d'}
+                            onClick={() => setTimeRange('30d')}
+                          >
+                            30d
+                          </S.ControlButton>
+                        </S.ButtonGroup>
+                      </S.ControlGroup>
+                    </S.ChartControls>
+
+                    <ChartView
+                      data={forecast}
+                      type={chartType}
+                      timeRange={timeRange}
+                    />
+                  </S.ChartSection>
+                )}
+              </>
             )}
           </S.MainContent>
 

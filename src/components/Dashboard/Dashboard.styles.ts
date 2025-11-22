@@ -47,6 +47,43 @@ export const Logo = styled.h1`
   }
 `;
 
+export const HeaderControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+export const UnitToggle = styled.div`
+  display: flex;
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  padding: ${({ theme }) => theme.spacing.xs};
+`;
+
+export const UnitButton = styled.button<{ $active: boolean }>`
+  background: ${({ theme, $active }) => 
+    $active ? theme.colors.primary : 'transparent'};
+  color: ${({ theme, $active }) => 
+    $active ? 'white' : theme.colors.text.primary};
+  border: none;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme, $active }) => 
+      $active ? theme.colors.primary : theme.colors.background.dark}22;
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;
+
 export const ContentSection = styled.main`
   max-width: 1400px;
   margin: 0 auto;

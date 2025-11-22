@@ -13,7 +13,7 @@ const MAX_RECENT_SEARCHES = 5;
 export function Dashboard() {
   const { currentWeather, isLoading: isWeatherLoading, error: weatherError, fetchWeatherByCity, fetchWeatherByCoords } = useWeatherData();
   const { coordinates, isLoading: isGeoLoading, error: geoError, requestLocation } = useGeolocation();
-  const { temperatureUnit, favoriteCities, addFavorite, removeFavorite } = useUserPreferences();
+  const { temperatureUnit, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit } = useUserPreferences();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -73,7 +73,25 @@ export function Dashboard() {
           <S.Logo>
             ☀️ Weather Data Visualizer
           </S.Logo>
-          <CitySearch onCitySelect={handleCitySelect} />
+          <S.HeaderControls>
+            <CitySearch onCitySelect={handleCitySelect} />
+            <S.UnitToggle>
+              <S.UnitButton
+                $active={temperatureUnit === 'celsius'}
+                onClick={() => setTemperatureUnit('celsius')}
+                aria-label="Use Celsius"
+              >
+                °C
+              </S.UnitButton>
+              <S.UnitButton
+                $active={temperatureUnit === 'fahrenheit'}
+                onClick={() => setTemperatureUnit('fahrenheit')}
+                aria-label="Use Fahrenheit"
+              >
+                °F
+              </S.UnitButton>
+            </S.UnitToggle>
+          </S.HeaderControls>
         </S.HeaderContent>
       </S.HeaderSection>
 

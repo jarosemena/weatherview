@@ -162,7 +162,7 @@ export function Dashboard() {
         </S.HeaderContent>
       </S.HeaderSection>
 
-      <S.ContentSection role="main">
+      <S.ContentSection role="main" id="main-content">
         <S.MainLayout>
           <S.MainContent>
             {isLoading && (

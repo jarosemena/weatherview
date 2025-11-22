@@ -30,14 +30,15 @@ export function WeatherCard({
   const iconUrl = `https://openweathermap.org/img/wn/${weatherData.conditions.icon}@2x.png`;
 
   return (
-    <S.CardContainer>
+    <S.CardContainer role="article" aria-label={`Weather information for ${weatherData.city}`}>
       <S.CityHeader>
         <S.CityName>{weatherData.city}, {weatherData.country}</S.CityName>
         {onFavoriteToggle && (
           <S.FavoriteButton
             onClick={onFavoriteToggle}
             $isFavorite={isFavorite}
-            aria-label="Toggle favorite"
+            aria-label={isFavorite ? `Remove ${weatherData.city} from favorites` : `Add ${weatherData.city} to favorites`}
+            aria-pressed={isFavorite}
           >
             {isFavorite ? '★' : '☆'}
           </S.FavoriteButton>
@@ -47,42 +48,56 @@ export function WeatherCard({
       <S.WeatherIcon>
         <S.WeatherImage
           src={iconUrl}
-          alt={weatherData.conditions.description}
+          alt={`Weather icon showing ${weatherData.conditions.description}`}
         />
       </S.WeatherIcon>
 
       <S.TemperatureDisplay>
-        <S.Temperature>{formatTemp(weatherData.temperature.current)}</S.Temperature>
+        <S.Temperature aria-label={`Current temperature ${formatTemp(weatherData.temperature.current)}`}>
+          {formatTemp(weatherData.temperature.current)}
+        </S.Temperature>
         <S.Conditions>{weatherData.conditions.main}</S.Conditions>
         <S.Description>{weatherData.conditions.description}</S.Description>
-        <S.FeelsLike>
+        <S.FeelsLike aria-label={`Feels like ${formatTemp(weatherData.temperature.feelsLike)}`}>
           Feels like {formatTemp(weatherData.temperature.feelsLike)}
         </S.FeelsLike>
         <S.MinMaxTemp>
-          <span>↓ {formatTemp(weatherData.temperature.min)}</span>
-          <span>↑ {formatTemp(weatherData.temperature.max)}</span>
+          <span aria-label={`Minimum temperature ${formatTemp(weatherData.temperature.min)}`}>
+            ↓ {formatTemp(weatherData.temperature.min)}
+          </span>
+          <span aria-label={`Maximum temperature ${formatTemp(weatherData.temperature.max)}`}>
+            ↑ {formatTemp(weatherData.temperature.max)}
+          </span>
         </S.MinMaxTemp>
       </S.TemperatureDisplay>
 
-      <S.WeatherDetails>
-        <S.DetailItem>
+      <S.WeatherDetails role="list" aria-label="Weather details">
+        <S.DetailItem role="listitem">
           <S.DetailLabel>Humidity</S.DetailLabel>
-          <S.DetailValue>{weatherData.humidity}%</S.DetailValue>
+          <S.DetailValue aria-label={`Humidity ${weatherData.humidity} percent`}>
+            {weatherData.humidity}%
+          </S.DetailValue>
         </S.DetailItem>
 
-        <S.DetailItem>
+        <S.DetailItem role="listitem">
           <S.DetailLabel>Wind</S.DetailLabel>
-          <S.DetailValue>{weatherData.wind.speed} m/s</S.DetailValue>
+          <S.DetailValue aria-label={`Wind speed ${weatherData.wind.speed} meters per second`}>
+            {weatherData.wind.speed} m/s
+          </S.DetailValue>
         </S.DetailItem>
 
-        <S.DetailItem>
+        <S.DetailItem role="listitem">
           <S.DetailLabel>Pressure</S.DetailLabel>
-          <S.DetailValue>{weatherData.pressure} hPa</S.DetailValue>
+          <S.DetailValue aria-label={`Atmospheric pressure ${weatherData.pressure} hectopascals`}>
+            {weatherData.pressure} hPa
+          </S.DetailValue>
         </S.DetailItem>
 
-        <S.DetailItem>
+        <S.DetailItem role="listitem">
           <S.DetailLabel>Visibility</S.DetailLabel>
-          <S.DetailValue>{(weatherData.visibility / 1000).toFixed(1)} km</S.DetailValue>
+          <S.DetailValue aria-label={`Visibility ${(weatherData.visibility / 1000).toFixed(1)} kilometers`}>
+            {(weatherData.visibility / 1000).toFixed(1)} km
+          </S.DetailValue>
         </S.DetailItem>
       </S.WeatherDetails>
     </S.CardContainer>

@@ -313,3 +313,34 @@ export const ControlButton = styled.button<{ $active: boolean }>`
     outline-offset: 2px;
   }
 `;
+
+
+export const ModeToggle = styled.button<{ $active: boolean }>`
+  background: ${({ theme, $active }) => 
+    $active ? theme.colors.secondary : theme.colors.background.main};
+  color: ${({ theme, $active }) => 
+    $active ? theme.colors.background.dark : theme.colors.text.primary};
+  border: 2px solid ${({ theme }) => theme.colors.secondary};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.secondary};
+    color: ${({ theme }) => theme.colors.background.dark};
+    transform: translateY(-2px);
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.secondary};
+    outline-offset: 2px;
+  }
+`;
+
+export const ComparisonSection = styled.section`
+  margin-top: ${({ theme }) => theme.spacing.xl};
+`;

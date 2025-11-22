@@ -5,11 +5,13 @@ import { useUserPreferences } from '../../hooks/useUserPreferences';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
 import { ChartView } from '../ChartView/ChartView';
+import { CityComparison } from '../CityComparison/CityComparison';
 import type { City, ChartType, TimeRange } from '../../types/weather.types';
 import * as S from './Dashboard.styles';
 
 const DEFAULT_CITY = 'London';
 const MAX_RECENT_SEARCHES = 5;
+const MAX_COMPARISON_CITIES = 4;
 
 export function Dashboard() {
   const { currentWeather, forecast, isLoading: isWeatherLoading, error: weatherError, fetchWeatherByCity, fetchWeatherByCoords } = useWeatherData();

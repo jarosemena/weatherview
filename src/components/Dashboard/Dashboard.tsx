@@ -3,9 +3,12 @@ import { useWeatherData } from '../../hooks/useWeatherData';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
+import { CitySearch } from '../CitySearch/CitySearch';
+import type { City } from '../../types/weather.types';
 import * as S from './Dashboard.styles';
 
 const DEFAULT_CITY = 'London';
+const MAX_RECENT_SEARCHES = 5;
 
 export function Dashboard() {
   const { currentWeather, isLoading: isWeatherLoading, error: weatherError, fetchWeatherByCity, fetchWeatherByCoords } = useWeatherData();
@@ -13,6 +16,7 @@ export function Dashboard() {
   const { temperatureUnit } = useUserPreferences();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   // Request geolocation on mount
   useEffect(() => {
@@ -37,6 +41,16 @@ export function Dashboard() {
     }
   }, [geoError, fetchWeatherByCity, useDefaultCity]);
 
+  const handleCitySelect = (city: City) => {
+    fetchWeatherByCity(city.name);
+    
+    // Add to recent searches
+    setRecentSearches(prev => {
+      const filtered = prev.filter(c => c !== city.name);
+      return [city.name, ...filtered].slice(0, MAX_RECENT_SEARCHES);
+    });
+  };
+
   const isLoading = isGeoLoading || isWeatherLoading;
   const hasError = weatherError !== null;
 
@@ -47,6 +61,7 @@ export function Dashboard() {
           <S.Logo>
             ☀️ Weather Data Visualizer
           </S.Logo>
+          <CitySearch onCitySelect={handleCitySelect} />
         </S.HeaderContent>
       </S.HeaderSection>
 

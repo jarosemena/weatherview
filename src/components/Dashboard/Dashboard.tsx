@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useWeatherData } from '../../hooks/useWeatherData';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
+import { useMultipleCitiesWeather } from '../../hooks/useMultipleCitiesWeather';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
 import { ChartView } from '../ChartView/ChartView';
@@ -22,6 +23,38 @@ export function Dashboard() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [chartType, setChartType] = useState<ChartType>('temperature');
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
+  const [isComparisonMode, setIsComparisonMode] = useState(false);
+  const [comparisonCities, setComparisonCities] = useState<string[]>([]);
+  
+  // Fetch data for comparison cities
+  const comparisonData = useMultipleCitiesWeather(comparisonCities);
+
+  const handleToggleComparisonMode = () => {
+    setIsComparisonMode(!isComparisonMode);
+    if (!isComparisonMode && currentWeather) {
+      // Add current city to comparison when entering comparison mode
+      setComparisonCities([currentWeather.city]);
+    } else {
+      // Clear comparison cities when exiting
+      setComparisonCities([]);
+    }
+  };
+
+  const handleAddCityToComparison = (city: City) => {
+    if (comparisonCities.length < MAX_COMPARISON_CITIES && !comparisonCities.includes(city.name)) {
+      setComparisonCities([...comparisonCities, city.name]);
+      fetchWeatherByCity(city.name);
+    }
+  };
+
+  const handleRemoveCityFromComparison = (cityName: string) => {
+    setComparisonCities(comparisonCities.filter(c => c !== cityName));
+    if (comparisonCities.length === 1) {
+      // Exit comparison mode if only one city left
+      setIsComparisonMode(false);
+      setComparisonCities([]);
+    }
+  };
 
   // Request geolocation on mount
   useEffect(() => {
@@ -47,7 +80,11 @@ export function Dashboard() {
   }, [geoError, fetchWeatherByCity, useDefaultCity]);
 
   const handleCitySelect = (city: City) => {
-    fetchWeatherByCity(city.name);
+    if (isComparisonMode) {
+      handleAddCityToComparison(city);
+    } else {
+      fetchWeatherByCity(city.name);
+    }
     
     // Add to recent searches
     setRecentSearches(prev => {
@@ -129,74 +166,155 @@ export function Dashboard() {
 
             {!isLoading && !hasError && currentWeather && (
               <>
-                <S.WeatherSection>
-                  <WeatherCard
-                    city={currentWeather.city}
-                    weatherData={currentWeather}
-                    unit={temperatureUnit}
-                    onFavoriteToggle={() => handleFavoriteToggle(currentWeather.city)}
-                    isFavorite={isFavorite(currentWeather.city)}
-                  />
-                </S.WeatherSection>
+                <S.ModeToggle
+                  $active={isComparisonMode}
+                  onClick={handleToggleComparisonMode}
+                  aria-label={isComparisonMode ? 'Exit comparison mode' : 'Enter comparison mode'}
+                >
+                  {isComparisonMode ? '📊 Exit Comparison Mode' : '📊 Compare Cities'}
+                </S.ModeToggle>
 
-                {forecast.length > 0 && (
-                  <S.ChartSection>
-                    <S.ChartControls>
-                      <S.ControlGroup>
-                        <S.ControlLabel>Chart Type</S.ControlLabel>
-                        <S.ButtonGroup>
-                          <S.ControlButton
-                            $active={chartType === 'temperature'}
-                            onClick={() => setChartType('temperature')}
-                          >
-                            Temperature
-                          </S.ControlButton>
-                          <S.ControlButton
-                            $active={chartType === 'precipitation'}
-                            onClick={() => setChartType('precipitation')}
-                          >
-                            Precipitation
-                          </S.ControlButton>
-                          <S.ControlButton
-                            $active={chartType === 'wind'}
-                            onClick={() => setChartType('wind')}
-                          >
-                            Wind
-                          </S.ControlButton>
-                        </S.ButtonGroup>
-                      </S.ControlGroup>
+                {!isComparisonMode ? (
+                  <>
+                    <S.WeatherSection>
+                      <WeatherCard
+                        city={currentWeather.city}
+                        weatherData={currentWeather}
+                        unit={temperatureUnit}
+                        onFavoriteToggle={() => handleFavoriteToggle(currentWeather.city)}
+                        isFavorite={isFavorite(currentWeather.city)}
+                      />
+                    </S.WeatherSection>
 
-                      <S.ControlGroup>
-                        <S.ControlLabel>Time Range</S.ControlLabel>
-                        <S.ButtonGroup>
-                          <S.ControlButton
-                            $active={timeRange === '24h'}
-                            onClick={() => setTimeRange('24h')}
-                          >
-                            24h
-                          </S.ControlButton>
-                          <S.ControlButton
-                            $active={timeRange === '7d'}
-                            onClick={() => setTimeRange('7d')}
-                          >
-                            7d
-                          </S.ControlButton>
-                          <S.ControlButton
-                            $active={timeRange === '30d'}
-                            onClick={() => setTimeRange('30d')}
-                          >
-                            30d
-                          </S.ControlButton>
-                        </S.ButtonGroup>
-                      </S.ControlGroup>
-                    </S.ChartControls>
+                    {forecast.length > 0 && (
+                      <S.ChartSection>
+                        <S.ChartControls>
+                          <S.ControlGroup>
+                            <S.ControlLabel>Chart Type</S.ControlLabel>
+                            <S.ButtonGroup>
+                              <S.ControlButton
+                                $active={chartType === 'temperature'}
+                                onClick={() => setChartType('temperature')}
+                              >
+                                Temperature
+                              </S.ControlButton>
+                              <S.ControlButton
+                                $active={chartType === 'precipitation'}
+                                onClick={() => setChartType('precipitation')}
+                              >
+                                Precipitation
+                              </S.ControlButton>
+                              <S.ControlButton
+                                $active={chartType === 'wind'}
+                                onClick={() => setChartType('wind')}
+                              >
+                                Wind
+                              </S.ControlButton>
+                            </S.ButtonGroup>
+                          </S.ControlGroup>
 
-                    <ChartView
-                      data={forecast}
-                      type={chartType}
-                      timeRange={timeRange}
+                          <S.ControlGroup>
+                            <S.ControlLabel>Time Range</S.ControlLabel>
+                            <S.ButtonGroup>
+                              <S.ControlButton
+                                $active={timeRange === '24h'}
+                                onClick={() => setTimeRange('24h')}
+                              >
+                                24h
+                              </S.ControlButton>
+                              <S.ControlButton
+                                $active={timeRange === '7d'}
+                                onClick={() => setTimeRange('7d')}
+                              >
+                                7d
+                              </S.ControlButton>
+                              <S.ControlButton
+                                $active={timeRange === '30d'}
+                                onClick={() => setTimeRange('30d')}
+                              >
+                                30d
+                              </S.ControlButton>
+                            </S.ButtonGroup>
+                          </S.ControlGroup>
+                        </S.ChartControls>
+
+                        <ChartView
+                          data={forecast}
+                          type={chartType}
+                          timeRange={timeRange}
+                        />
+                      </S.ChartSection>
+                    )}
+                  </>
+                ) : (
+                  <S.ComparisonSection>
+                    <CityComparison
+                      cities={comparisonCities}
+                      onRemoveCity={handleRemoveCityFromComparison}
+                      maxCities={MAX_COMPARISON_CITIES}
                     />
-                  </S.ChartSection>
+
+                    {comparisonData.some(city => city.forecast.length > 0) && (
+                      <S.ChartSection>
+                        <S.ChartControls>
+                          <S.ControlGroup>
+                            <S.ControlLabel>Chart Type</S.ControlLabel>
+                            <S.ButtonGroup>
+                              <S.ControlButton
+                                $active={chartType === 'temperature'}
+                                onClick={() => setChartType('temperature')}
+                              >
+                                Temperature
+                              </S.ControlButton>
+                              <S.ControlButton
+                                $active={chartType === 'precipitation'}
+                                onClick={() => setChartType('precipitation')}
+                              >
+                                Precipitation
+                              </S.ControlButton>
+                              <S.ControlButton
+                                $active={chartType === 'wind'}
+                                onClick={() => setChartType('wind')}
+                              >
+                                Wind
+                              </S.ControlButton>
+                            </S.ButtonGroup>
+                          </S.ControlGroup>
+
+                          <S.ControlGroup>
+                            <S.ControlLabel>Time Range</S.ControlLabel>
+                            <S.ButtonGroup>
+                              <S.ControlButton
+                                $active={timeRange === '24h'}
+                                onClick={() => setTimeRange('24h')}
+                              >
+                                24h
+                              </S.ControlButton>
+                              <S.ControlButton
+                                $active={timeRange === '7d'}
+                                onClick={() => setTimeRange('7d')}
+                              >
+                                7d
+                              </S.ControlButton>
+                              <S.ControlButton
+                                $active={timeRange === '30d'}
+                                onClick={() => setTimeRange('30d')}
+                              >
+                                30d
+                              </S.ControlButton>
+                            </S.ButtonGroup>
+                          </S.ControlGroup>
+                        </S.ChartControls>
+
+                        <ChartView
+                          data={comparisonData.map(city => city.forecast)}
+                          type={chartType}
+                          timeRange={timeRange}
+                          cities={comparisonCities}
+                        />
+                      </S.ChartSection>
+                    )}
+                  </S.ComparisonSection>
                 )}
               </>
             )}

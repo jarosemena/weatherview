@@ -28,7 +28,7 @@ ChartJS.register(
 );
 
 export interface ChartViewProps {
-  data: ForecastData[];
+  data: ForecastData[] | ForecastData[][];
   type: ChartType;
   timeRange: TimeRange;
   cities?: string[];
@@ -42,7 +42,11 @@ const CHART_COLORS = [
 ];
 
 export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps) {
-  if (data.length === 0) {
+  const isMultiCity = Array.isArray(data[0]) && Array.isArray(data);
+  const singleCityData = !isMultiCity ? data as ForecastData[] : [];
+  const multiCityData = isMultiCity ? data as ForecastData[][] : [];
+
+  if ((isMultiCity && multiCityData.length === 0) || (!isMultiCity && singleCityData.length === 0)) {
     return (
       <S.ChartContainer>
         <S.NoDataMessage>No data available</S.NoDataMessage>
@@ -68,37 +72,59 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
     }
   };
 
-  const getData = () => {
-    const labels = data.map(item => item.date);
-    
-    let values: number[];
+  const getValues = (forecastData: ForecastData[]) => {
     switch (type) {
       case 'temperature':
-        values = data.map(item => item.temperature.average);
-        break;
+        return forecastData.map(item => item.temperature.average);
       case 'precipitation':
-        values = data.map(item => item.precipitation);
-        break;
+        return forecastData.map(item => item.precipitation);
       case 'wind':
-        values = data.map(item => item.wind.speed);
-        break;
+        return forecastData.map(item => item.wind.speed);
       default:
-        values = [];
+        return [];
     }
+  };
 
-    return {
-      labels,
-      datasets: [
-        {
-          label: type.charAt(0).toUpperCase() + type.slice(1),
+  const getData = () => {
+    if (isMultiCity && cities.length > 0) {
+      // Multi-city comparison mode
+      const labels = multiCityData[0]?.map(item => item.date) || [];
+      
+      const datasets = cities.map((city, index) => {
+        const cityData = multiCityData[index] || [];
+        const values = getValues(cityData);
+        const color = CHART_COLORS[index % CHART_COLORS.length];
+
+        return {
+          label: city,
           data: values,
-          borderColor: CHART_COLORS[0],
-          backgroundColor: type === 'precipitation' ? CHART_COLORS[0] : `${CHART_COLORS[0]}33`,
+          borderColor: color,
+          backgroundColor: type === 'precipitation' ? color : `${color}33`,
           fill: type !== 'precipitation',
           tension: 0.4
-        }
-      ]
-    };
+        };
+      });
+
+      return { labels, datasets };
+    } else {
+      // Single city mode
+      const labels = singleCityData.map(item => item.date);
+      const values = getValues(singleCityData);
+
+      return {
+        labels,
+        datasets: [
+          {
+            label: type.charAt(0).toUpperCase() + type.slice(1),
+            data: values,
+            borderColor: CHART_COLORS[0],
+            backgroundColor: type === 'precipitation' ? CHART_COLORS[0] : `${CHART_COLORS[0]}33`,
+            fill: type !== 'precipitation',
+            tension: 0.4
+          }
+        ]
+      };
+    }
   };
 
   const options = {

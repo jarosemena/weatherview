@@ -6,6 +6,8 @@ export interface UseWeatherDataReturn {
   forecast: ForecastData[];
   isLoading: boolean;
   error: Error | null;
+  errorMessage: string | null;
+  isUsingCache: boolean;
   fetchWeatherByCity: (city: string) => Promise<void>;
   fetchWeatherByCoords: (lat: number, lon: number) => Promise<void>;
   refetch: () => void;
@@ -19,6 +21,8 @@ export function useWeatherData(): UseWeatherDataReturn {
     forecast: context.forecast,
     isLoading: context.isLoading,
     error: context.error,
+    errorMessage: context.errorMessage,
+    isUsingCache: context.isUsingCache,
     fetchWeatherByCity: context.fetchWeatherByCity,
     fetchWeatherByCoords: context.fetchWeatherByCoords,
     refetch: context.refetch

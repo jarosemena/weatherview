@@ -1,12 +1,10 @@
 import axios from 'axios';
 import type { WeatherData, ForecastData, City } from '../types/weather.types';
+import { retryWithBackoff } from '../utils/retryWithBackoff';
 
 // Open-Meteo API - Completely free, no API key required
 const WEATHER_BASE_URL = 'https://api.open-meteo.com/v1';
 const GEO_URL = 'https://geocoding-api.open-meteo.com/v1';
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
 
 interface OpenMeteoWeatherResponse {
   latitude: number;
@@ -39,34 +37,6 @@ interface GeoResponse {
     latitude: number;
     longitude: number;
   }>;
-}
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function retryRequest<T>(
-  fn: () => Promise<T>,
-  retries = MAX_RETRIES
-): Promise<T> {
-  try {
-    return await fn();
-  } catch (error) {
-    if (retries > 0 && isRetryableError(error)) {
-      await sleep(RETRY_DELAY);
-      return retryRequest(fn, retries - 1);
-    }
-    throw error;
-  }
-}
-
-function isRetryableError(error: unknown): boolean {
-  if (axios.isAxiosError(error)) {
-    return (
-      error.code === 'ECONNABORTED' ||
-      error.code === 'ETIMEDOUT' ||
-      (error.response?.status ?? 0) >= 500
-    );
-  }
-  return false;
 }
 
 // Weather code to description mapping (WMO Weather interpretation codes)
@@ -189,8 +159,8 @@ async function getCurrentWeather(city: string): Promise<WeatherData> {
 
     const cityData = geoResponse.data.results[0];
     
-    // Then get weather data
-    const weatherResponse = await retryRequest(() =>
+    // Then get weather data with exponential backoff
+    const weatherResponse = await retryWithBackoff(() =>
       axios.get<OpenMeteoWeatherResponse>(`${WEATHER_BASE_URL}/forecast`, {
         params: {
           latitude: cityData.latitude,
@@ -199,7 +169,14 @@ async function getCurrentWeather(city: string): Promise<WeatherData> {
           daily: 'temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant',
           timezone: 'auto'
         }
-      })
+      }),
+      {
+        maxRetries: 3,
+        initialDelay: 1000,
+        onRetry: (attempt) => {
+          console.log(`Retrying weather request (attempt ${attempt})...`);
+        }
+      }
     );
 
     return transformWeatherData(weatherResponse.data, cityData.name, cityData.country);
@@ -226,8 +203,8 @@ async function getCurrentWeatherByCoords(
   lon: number
 ): Promise<WeatherData> {
   try {
-    // First, try to get weather data for exact coordinates
-    const weatherResponse = await retryRequest(() =>
+    // First, try to get weather data for exact coordinates with exponential backoff
+    const weatherResponse = await retryWithBackoff(() =>
       axios.get<OpenMeteoWeatherResponse>(`${WEATHER_BASE_URL}/forecast`, {
         params: {
           latitude: lat,
@@ -236,7 +213,14 @@ async function getCurrentWeatherByCoords(
           daily: 'temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant',
           timezone: 'auto'
         }
-      })
+      }),
+      {
+        maxRetries: 3,
+        initialDelay: 1000,
+        onRetry: (attempt) => {
+          console.log(`Retrying weather request by coords (attempt ${attempt})...`);
+        }
+      }
     );
 
     // Try to get city name from reverse geocoding
@@ -331,8 +315,8 @@ async function getForecast(city: string, days: number): Promise<ForecastData[]> 
 
     const cityData = geoResponse.data.results[0];
     
-    // Get forecast data (Open-Meteo provides 7 days by default in free tier)
-    const weatherResponse = await retryRequest(() =>
+    // Get forecast data (Open-Meteo provides 7 days by default in free tier) with exponential backoff
+    const weatherResponse = await retryWithBackoff(() =>
       axios.get<OpenMeteoWeatherResponse>(`${WEATHER_BASE_URL}/forecast`, {
         params: {
           latitude: cityData.latitude,
@@ -341,7 +325,14 @@ async function getForecast(city: string, days: number): Promise<ForecastData[]> 
           daily: 'temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant',
           timezone: 'auto'
         }
-      })
+      }),
+      {
+        maxRetries: 3,
+        initialDelay: 1000,
+        onRetry: (attempt) => {
+          console.log(`Retrying forecast request (attempt ${attempt})...`);
+        }
+      }
     );
 
     return transformForecastData(weatherResponse.data);

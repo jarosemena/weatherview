@@ -3,10 +3,12 @@ import { useWeatherData } from '../../hooks/useWeatherData';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 import { useMultipleCitiesWeather } from '../../hooks/useMultipleCitiesWeather';
+import { useToast } from '../../context/ToastContext';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
 import { ChartView } from '../ChartView/ChartView';
 import { CityComparison } from '../CityComparison/CityComparison';
+import { ErrorMessage } from '../ErrorMessage/ErrorMessage';
 import type { City, ChartType, TimeRange } from '../../types/weather.types';
 import * as S from './Dashboard.styles';
 
@@ -15,9 +17,10 @@ const MAX_RECENT_SEARCHES = 5;
 const MAX_COMPARISON_CITIES = 4;
 
 export function Dashboard() {
-  const { currentWeather, forecast, isLoading: isWeatherLoading, error: weatherError, fetchWeatherByCity, fetchWeatherByCoords } = useWeatherData();
+  const { currentWeather, forecast, isLoading: isWeatherLoading, error: weatherError, errorMessage, isUsingCache, fetchWeatherByCity, fetchWeatherByCoords, refetch } = useWeatherData();
   const { coordinates, isLoading: isGeoLoading, error: geoError, requestLocation } = useGeolocation();
   const { temperatureUnit, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit } = useUserPreferences();
+  const { showWarning, showError, showInfo } = useToast();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -74,10 +77,29 @@ export function Dashboard() {
   // Handle geolocation error - fallback to default city
   useEffect(() => {
     if (geoError && !useDefaultCity) {
+      showWarning('Unable to access your location. Using default city.');
       setUseDefaultCity(true);
       fetchWeatherByCity(DEFAULT_CITY);
     }
-  }, [geoError, fetchWeatherByCity, useDefaultCity]);
+  }, [geoError, fetchWeatherByCity, useDefaultCity, showWarning]);
+
+  // Show toast for weather errors (non-critical)
+  useEffect(() => {
+    if (weatherError && !isWeatherLoading) {
+      if (isUsingCache) {
+        showWarning('Unable to fetch fresh data. Showing cached weather information.');
+      } else {
+        showError(errorMessage || 'Failed to load weather data. Please try again.');
+      }
+    }
+  }, [weatherError, isWeatherLoading, isUsingCache, errorMessage, showError, showWarning]);
+
+  // Show info when using cached data
+  useEffect(() => {
+    if (isUsingCache && currentWeather) {
+      showInfo('Showing cached data. Network connection may be unstable.');
+    }
+  }, [isUsingCache, currentWeather, showInfo]);
 
   const handleCitySelect = (city: City) => {
     if (isComparisonMode) {
@@ -149,13 +171,12 @@ export function Dashboard() {
               </S.LoadingContainer>
             )}
 
-            {!isLoading && hasError && (
-              <S.ErrorContainer>
-                <S.ErrorTitle>Error Loading Weather Data</S.ErrorTitle>
-                <S.ErrorMessage>
-                  {weatherError?.message || 'Unable to fetch weather data. Please try again later.'}
-                </S.ErrorMessage>
-              </S.ErrorContainer>
+            {!isLoading && hasError && !currentWeather && (
+              <ErrorMessage
+                title="Weather Data Unavailable"
+                message={errorMessage || 'Unable to fetch weather data. Please try again later.'}
+                onRetry={refetch}
+              />
             )}
 
             {!isLoading && !hasError && useDefaultCity && (
@@ -166,6 +187,12 @@ export function Dashboard() {
 
             {!isLoading && !hasError && currentWeather && (
               <>
+                {isUsingCache && (
+                  <S.CacheBadge>
+                    ⚠️ Showing cached data - Network connection may be unstable
+                  </S.CacheBadge>
+                )}
+                
                 <S.ModeToggle
                   $active={isComparisonMode}
                   onClick={handleToggleComparisonMode}

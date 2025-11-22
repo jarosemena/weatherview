@@ -4,6 +4,7 @@ import { GlobalStyles } from './theme/GlobalStyles';
 import { theme } from './theme/theme';
 import { WeatherProvider } from './context/WeatherContext';
 import { PreferencesProvider } from './context/PreferencesContext';
+import { ToastProvider } from './context/ToastContext';
 import { Dashboard } from './components/Dashboard/Dashboard';
 
 const queryClient = new QueryClient({
@@ -22,9 +23,11 @@ function App() {
       <PreferencesProvider>
         <ThemeProvider theme={theme}>
           <GlobalStyles />
-          <WeatherProvider>
-            <Dashboard />
-          </WeatherProvider>
+          <ToastProvider>
+            <WeatherProvider>
+              <Dashboard />
+            </WeatherProvider>
+          </ToastProvider>
         </ThemeProvider>
       </PreferencesProvider>
     </QueryClientProvider>

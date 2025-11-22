@@ -214,21 +214,7 @@ async function getCurrentWeatherByCoords(
   lon: number
 ): Promise<WeatherData> {
   try {
-    // Get city name from coordinates
-    const geoResponse = await axios.get<GeoResponse>(`${GEO_URL}/search`, {
-      params: {
-        latitude: lat,
-        longitude: lon,
-        count: 1,
-        language: 'en',
-        format: 'json'
-      }
-    });
-
-    const cityName = geoResponse.data.results?.[0]?.name || 'Unknown';
-    const country = geoResponse.data.results?.[0]?.country || 'Unknown';
-
-    // Get weather data
+    // First, get weather data
     const weatherResponse = await retryRequest(() =>
       axios.get<OpenMeteoWeatherResponse>(`${WEATHER_BASE_URL}/forecast`, {
         params: {
@@ -241,8 +227,37 @@ async function getCurrentWeatherByCoords(
       })
     );
 
+    // Try to get city name from reverse geocoding using a different service
+    let cityName = 'Current Location';
+    let country = '';
+    
+    try {
+      // Use Nominatim for reverse geocoding (free, no API key)
+      const reverseGeoResponse = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+        params: {
+          lat,
+          lon,
+          format: 'json',
+          'accept-language': 'en'
+        },
+        headers: {
+          'User-Agent': 'WeatherDataVisualizer/1.0'
+        }
+      });
+
+      if (reverseGeoResponse.data && reverseGeoResponse.data.address) {
+        const address = reverseGeoResponse.data.address;
+        cityName = address.city || address.town || address.village || address.county || 'Current Location';
+        country = address.country_code?.toUpperCase() || '';
+      }
+    } catch (geoError) {
+      // If reverse geocoding fails, continue with default values
+      console.warn('Reverse geocoding failed, using default location name');
+    }
+
     return transformWeatherData(weatherResponse.data, cityName, country);
   } catch (error) {
+    console.error('Error fetching weather by coordinates:', error);
     throw new Error('Failed to fetch weather data by coordinates');
   }
 }

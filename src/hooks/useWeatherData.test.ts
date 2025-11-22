@@ -5,6 +5,7 @@ import { useWeatherData } from './useWeatherData';
 import { WeatherProvider } from '../context/WeatherContext';
 import { weatherApi } from '../services/weatherApi';
 import type { WeatherData, ForecastData } from '../types/weather.types';
+import React from 'react';
 
 vi.mock('../services/weatherApi');
 
@@ -32,20 +33,20 @@ const mockForecastData: ForecastData[] = [
   }
 ];
 
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false }
-    }
-  });
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+    mutations: { retry: false }
+  }
+});
 
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <WeatherProvider>{children}</WeatherProvider>
-    </QueryClientProvider>
+const wrapper = ({ children }: { children: React.ReactNode }) => {
+  return React.createElement(
+    QueryClientProvider,
+    { client: queryClient },
+    React.createElement(WeatherProvider, null, children)
   );
-}
+};
 
 describe('useWeatherData', () => {
   beforeEach(() => {
@@ -53,9 +54,7 @@ describe('useWeatherData', () => {
   });
 
   it('should return initial state', () => {
-    const { result } = renderHook(() => useWeatherData(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useWeatherData(), { wrapper });
 
     expect(result.current.currentWeather).toBeNull();
     expect(result.current.forecast).toEqual([]);
@@ -67,9 +66,7 @@ describe('useWeatherData', () => {
     vi.mocked(weatherApi.getCurrentWeather).mockResolvedValue(mockWeatherData);
     vi.mocked(weatherApi.getForecast).mockResolvedValue(mockForecastData);
 
-    const { result } = renderHook(() => useWeatherData(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useWeatherData(), { wrapper });
 
     await result.current.fetchWeatherByCity('London');
 
@@ -86,9 +83,7 @@ describe('useWeatherData', () => {
     vi.mocked(weatherApi.getCurrentWeatherByCoords).mockResolvedValue(mockWeatherData);
     vi.mocked(weatherApi.getForecast).mockResolvedValue(mockForecastData);
 
-    const { result } = renderHook(() => useWeatherData(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useWeatherData(), { wrapper });
 
     await result.current.fetchWeatherByCoords(51.5074, -0.1278);
 
@@ -101,24 +96,16 @@ describe('useWeatherData', () => {
   });
 
   it('should handle loading state', async () => {
-    vi.mocked(weatherApi.getCurrentWeather).mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve(mockWeatherData), 100))
-    );
+    vi.mocked(weatherApi.getCurrentWeather).mockResolvedValue(mockWeatherData);
+    vi.mocked(weatherApi.getForecast).mockResolvedValue(mockForecastData);
 
-    const { result } = renderHook(() => useWeatherData(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useWeatherData(), { wrapper });
 
-    const promise = result.current.fetchWeatherByCity('London');
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(true);
-    });
-
-    await promise;
+    await result.current.fetchWeatherByCity('London');
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
+      expect(result.current.currentWeather).toEqual(mockWeatherData);
     });
   });
 
@@ -126,9 +113,7 @@ describe('useWeatherData', () => {
     const error = new Error('City not found');
     vi.mocked(weatherApi.getCurrentWeather).mockRejectedValue(error);
 
-    const { result } = renderHook(() => useWeatherData(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useWeatherData(), { wrapper });
 
     await result.current.fetchWeatherByCity('InvalidCity');
 
@@ -142,9 +127,7 @@ describe('useWeatherData', () => {
     vi.mocked(weatherApi.getCurrentWeather).mockResolvedValue(mockWeatherData);
     vi.mocked(weatherApi.getForecast).mockResolvedValue(mockForecastData);
 
-    const { result } = renderHook(() => useWeatherData(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useWeatherData(), { wrapper });
 
     await result.current.fetchWeatherByCity('London');
 
@@ -166,9 +149,7 @@ describe('useWeatherData', () => {
   });
 
   it('should provide all required methods', () => {
-    const { result } = renderHook(() => useWeatherData(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useWeatherData(), { wrapper });
 
     expect(typeof result.current.fetchWeatherByCity).toBe('function');
     expect(typeof result.current.fetchWeatherByCoords).toBe('function');

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useWeatherData } from '../../hooks/useWeatherData';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
@@ -6,11 +6,14 @@ import { useMultipleCitiesWeather } from '../../hooks/useMultipleCitiesWeather';
 import { useToast } from '../../context/ToastContext';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
-import { ChartView } from '../ChartView/ChartView';
-import { CityComparison } from '../CityComparison/CityComparison';
 import { ErrorMessage } from '../ErrorMessage/ErrorMessage';
+import { LoadingSpinner } from '../LoadingSpinner/LoadingSpinner';
 import type { City, ChartType, TimeRange } from '../../types/weather.types';
 import * as S from './Dashboard.styles';
+
+// Lazy load heavy components
+const ChartView = lazy(() => import('../ChartView/ChartView').then(module => ({ default: module.ChartView })));
+const CityComparison = lazy(() => import('../CityComparison/CityComparison').then(module => ({ default: module.CityComparison })));
 
 const DEFAULT_CITY = 'London';
 const MAX_RECENT_SEARCHES = 5;
@@ -265,21 +268,25 @@ export function Dashboard() {
                           </S.ControlGroup>
                         </S.ChartControls>
 
-                        <ChartView
-                          data={forecast}
-                          type={chartType}
-                          timeRange={timeRange}
-                        />
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <ChartView
+                            data={forecast}
+                            type={chartType}
+                            timeRange={timeRange}
+                          />
+                        </Suspense>
                       </S.ChartSection>
                     )}
                   </>
                 ) : (
                   <S.ComparisonSection>
-                    <CityComparison
-                      cities={comparisonCities}
-                      onRemoveCity={handleRemoveCityFromComparison}
-                      maxCities={MAX_COMPARISON_CITIES}
-                    />
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <CityComparison
+                        cities={comparisonCities}
+                        onRemoveCity={handleRemoveCityFromComparison}
+                        maxCities={MAX_COMPARISON_CITIES}
+                      />
+                    </Suspense>
 
                     {comparisonData.some(city => city.forecast.length > 0) && (
                       <S.ChartSection>
@@ -333,12 +340,14 @@ export function Dashboard() {
                           </S.ControlGroup>
                         </S.ChartControls>
 
-                        <ChartView
-                          data={comparisonData.map(city => city.forecast)}
-                          type={chartType}
-                          timeRange={timeRange}
-                          cities={comparisonCities}
-                        />
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <ChartView
+                            data={comparisonData.map(city => city.forecast)}
+                            type={chartType}
+                            timeRange={timeRange}
+                            cities={comparisonCities}
+                          />
+                        </Suspense>
                       </S.ChartSection>
                     )}
                   </S.ComparisonSection>

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Dashboard } from './Dashboard';
 import { WeatherProvider } from '../../context/WeatherContext';
 import { PreferencesProvider } from '../../context/PreferencesContext';
+import { ToastProvider } from '../../context/ToastContext';
 import { theme } from '../../theme/theme';
 import { geolocationService } from '../../services/geolocationService';
 import { weatherApi } from '../../services/weatherApi';
@@ -38,9 +39,11 @@ function renderWithProviders(component: React.ReactElement) {
     <QueryClientProvider client={queryClient}>
       <PreferencesProvider>
         <ThemeProvider theme={theme}>
-          <WeatherProvider>
-            {component}
-          </WeatherProvider>
+          <ToastProvider>
+            <WeatherProvider>
+              {component}
+            </WeatherProvider>
+          </ToastProvider>
         </ThemeProvider>
       </PreferencesProvider>
     </QueryClientProvider>
@@ -53,6 +56,11 @@ describe('Dashboard', () => {
   });
 
   it('should render dashboard container', () => {
+    vi.mocked(geolocationService.getCurrentPosition).mockResolvedValue({
+      lat: 51.5074,
+      lon: -0.1278
+    });
+    
     renderWithProviders(<Dashboard />);
     
     expect(screen.getByTestId('dashboard-container')).toBeInTheDocument();
@@ -95,7 +103,7 @@ describe('Dashboard', () => {
 
     renderWithProviders(<Dashboard />);
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText(/getting your location/i)).toBeInTheDocument();
   });
 
   it('should display default city when geolocation fails', async () => {

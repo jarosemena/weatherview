@@ -126,3 +126,93 @@ export const InfoMessage = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
   text-align: center;
 `;
+
+
+export const MainLayout = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: ${({ theme }) => theme.spacing.xl};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.desktop}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const MainContent = styled.div`
+  min-width: 0;
+`;
+
+export const SidebarSection = styled.aside`
+  @media (max-width: ${({ theme }) => theme.breakpoints.desktop}) {
+    order: -1;
+  }
+`;
+
+export const SidebarCard = styled.div`
+  background: ${({ theme }) => theme.colors.background.main};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  padding: ${({ theme }) => theme.spacing.lg};
+`;
+
+export const SidebarTitle = styled.h3`
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
+`;
+
+export const FavoritesList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+export const FavoriteItem = styled.li`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+  background: ${({ theme }) => theme.colors.background.secondary};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.primary}22;
+    transform: translateX(4px);
+  }
+`;
+
+export const FavoriteName = styled.span`
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+export const RemoveFavoriteButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.error};
+  cursor: pointer;
+  padding: ${({ theme }) => theme.spacing.xs};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.2);
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.error};
+    outline-offset: 2px;
+  }
+`;
+
+export const EmptyFavorites = styled.p`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.lg} 0;
+  margin: 0;
+`;

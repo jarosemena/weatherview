@@ -13,7 +13,7 @@ const MAX_RECENT_SEARCHES = 5;
 export function Dashboard() {
   const { currentWeather, isLoading: isWeatherLoading, error: weatherError, fetchWeatherByCity, fetchWeatherByCoords } = useWeatherData();
   const { coordinates, isLoading: isGeoLoading, error: geoError, requestLocation } = useGeolocation();
-  const { temperatureUnit } = useUserPreferences();
+  const { temperatureUnit, favoriteCities, addFavorite, removeFavorite } = useUserPreferences();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -51,6 +51,18 @@ export function Dashboard() {
     });
   };
 
+  const handleFavoriteToggle = (city: string) => {
+    if (isFavorite(city)) {
+      removeFavorite(city);
+    } else {
+      addFavorite(city);
+    }
+  };
+
+  const isFavorite = (city: string) => {
+    return favoriteCities.includes(city);
+  };
+
   const isLoading = isGeoLoading || isWeatherLoading;
   const hasError = weatherError !== null;
 
@@ -66,39 +78,74 @@ export function Dashboard() {
       </S.HeaderSection>
 
       <S.ContentSection role="main">
-        {isLoading && (
-          <S.LoadingContainer>
-            <S.LoadingSpinner />
-            <S.LoadingText>
-              {isGeoLoading ? 'Getting your location...' : 'Loading weather data...'}
-            </S.LoadingText>
-          </S.LoadingContainer>
-        )}
+        <S.MainLayout>
+          <S.MainContent>
+            {isLoading && (
+              <S.LoadingContainer>
+                <S.LoadingSpinner />
+                <S.LoadingText>
+                  {isGeoLoading ? 'Getting your location...' : 'Loading weather data...'}
+                </S.LoadingText>
+              </S.LoadingContainer>
+            )}
 
-        {!isLoading && hasError && (
-          <S.ErrorContainer>
-            <S.ErrorTitle>Error Loading Weather Data</S.ErrorTitle>
-            <S.ErrorMessage>
-              {weatherError?.message || 'Unable to fetch weather data. Please try again later.'}
-            </S.ErrorMessage>
-          </S.ErrorContainer>
-        )}
+            {!isLoading && hasError && (
+              <S.ErrorContainer>
+                <S.ErrorTitle>Error Loading Weather Data</S.ErrorTitle>
+                <S.ErrorMessage>
+                  {weatherError?.message || 'Unable to fetch weather data. Please try again later.'}
+                </S.ErrorMessage>
+              </S.ErrorContainer>
+            )}
 
-        {!isLoading && !hasError && useDefaultCity && (
-          <S.InfoMessage>
-            ℹ️ Using default location: {DEFAULT_CITY}
-          </S.InfoMessage>
-        )}
+            {!isLoading && !hasError && useDefaultCity && (
+              <S.InfoMessage>
+                ℹ️ Using default location: {DEFAULT_CITY}
+              </S.InfoMessage>
+            )}
 
-        {!isLoading && !hasError && currentWeather && (
-          <S.WeatherSection>
-            <WeatherCard
-              city={currentWeather.city}
-              weatherData={currentWeather}
-              unit={temperatureUnit}
-            />
-          </S.WeatherSection>
-        )}
+            {!isLoading && !hasError && currentWeather && (
+              <S.WeatherSection>
+                <WeatherCard
+                  city={currentWeather.city}
+                  weatherData={currentWeather}
+                  unit={temperatureUnit}
+                  onFavoriteToggle={() => handleFavoriteToggle(currentWeather.city)}
+                  isFavorite={isFavorite(currentWeather.city)}
+                />
+              </S.WeatherSection>
+            )}
+          </S.MainContent>
+
+          <S.SidebarSection>
+            <S.SidebarCard>
+              <S.SidebarTitle>Favorite Cities</S.SidebarTitle>
+              {favoriteCities.length === 0 ? (
+                <S.EmptyFavorites>
+                  No favorite cities yet.
+                  <br />
+                  Click the star on a city to add it!
+                </S.EmptyFavorites>
+              ) : (
+                <S.FavoritesList>
+                  {favoriteCities.map((city) => (
+                    <S.FavoriteItem key={city}>
+                      <S.FavoriteName onClick={() => fetchWeatherByCity(city)}>
+                        {city}
+                      </S.FavoriteName>
+                      <S.RemoveFavoriteButton
+                        onClick={() => removeFavorite(city)}
+                        aria-label={`Remove ${city} from favorites`}
+                      >
+                        ✕
+                      </S.RemoveFavoriteButton>
+                    </S.FavoriteItem>
+                  ))}
+                </S.FavoritesList>
+              )}
+            </S.SidebarCard>
+          </S.SidebarSection>
+        </S.MainLayout>
       </S.ContentSection>
     </S.DashboardContainer>
   );

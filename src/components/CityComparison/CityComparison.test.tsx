@@ -1,23 +1,41 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ThemeProvider } from 'styled-components';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { CityComparison } from './CityComparison';
+import { PreferencesProvider } from '../../context/PreferencesContext';
 import { theme } from '../../theme/theme';
 
-function renderWithTheme(component: React.ReactElement) {
+function renderWithProviders(component: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
   return render(
-    <ThemeProvider theme={theme}>
-      {component}
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <PreferencesProvider>
+        <ThemeProvider theme={theme}>
+          {component}
+        </ThemeProvider>
+      </PreferencesProvider>
+    </QueryClientProvider>
   );
 }
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 describe('CityComparison', () => {
   it('should render all cities', () => {
     const cities = ['London', 'Paris', 'Tokyo'];
     
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={cities} onRemoveCity={vi.fn()} />
     );
 
@@ -29,7 +47,7 @@ describe('CityComparison', () => {
   it('should render remove button for each city', () => {
     const cities = ['London', 'Paris'];
     
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={cities} onRemoveCity={vi.fn()} />
     );
 
@@ -42,7 +60,7 @@ describe('CityComparison', () => {
     const onRemoveCity = vi.fn();
     const cities = ['London', 'Paris'];
     
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={cities} onRemoveCity={onRemoveCity} />
     );
 
@@ -55,7 +73,7 @@ describe('CityComparison', () => {
   it('should display cities in a grid layout', () => {
     const cities = ['London', 'Paris', 'Tokyo'];
     
-    const { container } = renderWithTheme(
+    const { container } = renderWithProviders(
       <CityComparison cities={cities} onRemoveCity={vi.fn()} />
     );
 
@@ -66,35 +84,35 @@ describe('CityComparison', () => {
   it('should show add city button when below max cities', () => {
     const cities = ['London', 'Paris'];
     
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={cities} onRemoveCity={vi.fn()} maxCities={4} />
     );
 
-    expect(screen.getByText(/add city/i)).toBeInTheDocument();
+    expect(screen.getByText(/search for a city/i)).toBeInTheDocument();
   });
 
   it('should not show add city button when at max cities', () => {
     const cities = ['London', 'Paris', 'Tokyo', 'New York'];
     
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={cities} onRemoveCity={vi.fn()} maxCities={4} />
     );
 
-    expect(screen.queryByText(/add city/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/search for a city/i)).not.toBeInTheDocument();
   });
 
   it('should use default maxCities of 4', () => {
     const cities = ['London', 'Paris', 'Tokyo', 'New York'];
     
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={cities} onRemoveCity={vi.fn()} />
     );
 
-    expect(screen.queryByText(/add city/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/search for a city/i)).not.toBeInTheDocument();
   });
 
   it('should handle empty cities array', () => {
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={[]} onRemoveCity={vi.fn()} />
     );
 
@@ -102,7 +120,7 @@ describe('CityComparison', () => {
   });
 
   it('should handle single city', () => {
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={['London']} onRemoveCity={vi.fn()} />
     );
 
@@ -111,7 +129,7 @@ describe('CityComparison', () => {
   });
 
   it('should display comparison title', () => {
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={['London', 'Paris']} onRemoveCity={vi.fn()} />
     );
 
@@ -121,7 +139,7 @@ describe('CityComparison', () => {
   it('should show city count', () => {
     const cities = ['London', 'Paris', 'Tokyo'];
     
-    renderWithTheme(
+    renderWithProviders(
       <CityComparison cities={cities} onRemoveCity={vi.fn()} maxCities={4} />
     );
 

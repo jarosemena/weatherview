@@ -124,6 +124,9 @@ describe('PreferencesContext', () => {
       wrapper: createWrapper()
     });
 
+    // Clear any initial calls
+    vi.clearAllMocks();
+
     act(() => {
       result.current.addFavorite('London');
     });

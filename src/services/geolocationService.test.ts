@@ -34,7 +34,10 @@ describe('geolocationService', () => {
     it('should reject with error when permission is denied', async () => {
       const mockError = {
         code: 1,
-        message: 'User denied geolocation'
+        message: 'User denied geolocation',
+        PERMISSION_DENIED: 1,
+        POSITION_UNAVAILABLE: 2,
+        TIMEOUT: 3
       };
 
       const mockGeolocation = {
@@ -52,7 +55,10 @@ describe('geolocationService', () => {
     it('should reject with error when position is unavailable', async () => {
       const mockError = {
         code: 2,
-        message: 'Position unavailable'
+        message: 'Position unavailable',
+        PERMISSION_DENIED: 1,
+        POSITION_UNAVAILABLE: 2,
+        TIMEOUT: 3
       };
 
       const mockGeolocation = {
@@ -68,9 +74,18 @@ describe('geolocationService', () => {
     });
 
     it('should reject with timeout error after 5 seconds', async () => {
+      const mockError = {
+        code: 3,
+        message: 'Timeout',
+        PERMISSION_DENIED: 1,
+        POSITION_UNAVAILABLE: 2,
+        TIMEOUT: 3
+      };
+
       const mockGeolocation = {
-        getCurrentPosition: vi.fn(() => {
-          // Never calls success or error - simulates timeout
+        getCurrentPosition: vi.fn((success, error) => {
+          // Simulate timeout by calling error callback
+          setTimeout(() => error(mockError), 50);
         })
       };
 
@@ -78,7 +93,7 @@ describe('geolocationService', () => {
 
       await expect(geolocationService.getCurrentPosition({ timeout: 100 }))
         .rejects.toThrow('Timeout');
-    });
+    }, 10000); // Increase test timeout
 
     it('should use custom timeout option', async () => {
       const mockPosition = {

@@ -3,14 +3,11 @@ import { renderHook, act } from '@testing-library/react';
 import { useUserPreferences } from './useUserPreferences';
 import { PreferencesProvider } from '../context/PreferencesContext';
 import { storageService } from '../services/storageService';
+import React from 'react';
 
 vi.mock('../services/storageService');
 
-function createWrapper() {
-  return ({ children }: { children: React.ReactNode }) => (
-    <PreferencesProvider>{children}</PreferencesProvider>
-  );
-}
+const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(PreferencesProvider, null, children);
 
 describe('useUserPreferences', () => {
   beforeEach(() => {
@@ -21,9 +18,7 @@ describe('useUserPreferences', () => {
   it('should return default preferences', () => {
     vi.mocked(storageService.get).mockReturnValue(null);
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     expect(result.current.favoriteCities).toEqual([]);
     expect(result.current.temperatureUnit).toBe('celsius');
@@ -35,9 +30,7 @@ describe('useUserPreferences', () => {
       temperatureUnit: 'fahrenheit'
     });
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     expect(result.current.favoriteCities).toEqual(['London', 'Paris']);
     expect(result.current.temperatureUnit).toBe('fahrenheit');
@@ -46,9 +39,7 @@ describe('useUserPreferences', () => {
   it('should add favorite city', () => {
     vi.mocked(storageService.get).mockReturnValue(null);
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.addFavorite('London');
@@ -63,9 +54,7 @@ describe('useUserPreferences', () => {
       temperatureUnit: 'celsius'
     });
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.addFavorite('London');
@@ -77,9 +66,7 @@ describe('useUserPreferences', () => {
   it('should add multiple favorites', () => {
     vi.mocked(storageService.get).mockReturnValue(null);
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.addFavorite('London');
@@ -96,9 +83,7 @@ describe('useUserPreferences', () => {
       temperatureUnit: 'celsius'
     });
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.removeFavorite('Paris');
@@ -113,9 +98,7 @@ describe('useUserPreferences', () => {
       temperatureUnit: 'celsius'
     });
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.removeFavorite('Paris');
@@ -127,9 +110,7 @@ describe('useUserPreferences', () => {
   it('should set temperature unit to fahrenheit', () => {
     vi.mocked(storageService.get).mockReturnValue(null);
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.setTemperatureUnit('fahrenheit');
@@ -144,9 +125,7 @@ describe('useUserPreferences', () => {
       temperatureUnit: 'fahrenheit'
     });
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.setTemperatureUnit('celsius');
@@ -158,9 +137,7 @@ describe('useUserPreferences', () => {
   it('should persist changes to storage', () => {
     vi.mocked(storageService.get).mockReturnValue(null);
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.addFavorite('London');
@@ -175,9 +152,7 @@ describe('useUserPreferences', () => {
       temperatureUnit: 'celsius'
     });
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     act(() => {
       result.current.setTemperatureUnit('fahrenheit');
@@ -190,9 +165,7 @@ describe('useUserPreferences', () => {
   it('should provide all required methods', () => {
     vi.mocked(storageService.get).mockReturnValue(null);
 
-    const { result } = renderHook(() => useUserPreferences(), {
-      wrapper: createWrapper()
-    });
+    const { result } = renderHook(() => useUserPreferences(), { wrapper });
 
     expect(typeof result.current.addFavorite).toBe('function');
     expect(typeof result.current.removeFavorite).toBe('function');

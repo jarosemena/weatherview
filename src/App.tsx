@@ -4,6 +4,8 @@ import { GlobalStyles } from './theme/GlobalStyles';
 import { theme } from './theme/theme';
 import { WeatherProvider } from './context/WeatherContext';
 import { PreferencesProvider } from './context/PreferencesContext';
+import { ToastProvider } from './context/ToastContext';
+import { Dashboard } from './components/Dashboard/Dashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,12 +23,11 @@ function App() {
       <PreferencesProvider>
         <ThemeProvider theme={theme}>
           <GlobalStyles />
-          <WeatherProvider>
-            <div>
-              <h1>Weather Data Visualizer</h1>
-              <p>Dashboard coming soon...</p>
-            </div>
-          </WeatherProvider>
+          <ToastProvider>
+            <WeatherProvider>
+              <Dashboard />
+            </WeatherProvider>
+          </ToastProvider>
         </ThemeProvider>
       </PreferencesProvider>
     </QueryClientProvider>

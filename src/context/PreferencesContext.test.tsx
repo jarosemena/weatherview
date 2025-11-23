@@ -169,4 +169,43 @@ describe('PreferencesContext', () => {
       renderHook(() => usePreferencesContext());
     }).toThrow('usePreferencesContext must be used within PreferencesProvider');
   });
+
+  describe('Property-Based Tests', () => {
+    /**
+     * Feature: weather-data-visualizer, Property 3: Saved theme is applied on load
+     * Validates: Requirements 11.4
+     */
+    it(
+      'Property 3: Dashboard should apply saved theme preference on load',
+      async () => {
+        const fc = await import('fast-check');
+
+        await fc.assert(
+          fc.property(
+            fc.constantFrom('light' as const, 'dark' as const),
+            (savedTheme) => {
+              // Simular que hay un tema guardado en localStorage
+              vi.mocked(storageService.get).mockReturnValue({
+                favoriteCities: [],
+                temperatureUnit: 'celsius',
+                theme: savedTheme
+              });
+
+              // Renderizar el contexto (simula cargar el Dashboard)
+              const { result } = renderHook(() => usePreferencesContext(), {
+                wrapper: createWrapper()
+              });
+
+              // Verificar que el tema cargado es el que estaba guardado
+              expect(result.current.theme).toBe(savedTheme);
+
+              // Limpiar
+              vi.clearAllMocks();
+            }
+          ),
+          { numRuns: 100 }
+        );
+      }
+    );
+  });
 });

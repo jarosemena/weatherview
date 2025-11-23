@@ -128,4 +128,60 @@ describe('ThemeToggle', () => {
       expect(styles.transition).toBeTruthy();
     });
   });
+
+  describe('Property-Based Tests', () => {
+    /**
+     * Feature: weather-data-visualizer, Property 1: Theme toggle switches state
+     * Validates: Requirements 11.2
+     */
+    it(
+      'Property 1: theme toggle should always switch to opposite theme',
+      async () => {
+        const fc = await import('fast-check');
+
+        await fc.assert(
+          fc.asyncProperty(
+            fc.constantFrom('light' as const, 'dark' as const),
+            async (initialTheme) => {
+              const user = userEvent.setup();
+              let currentTheme = initialTheme;
+              const mockToggle = vi.fn(() => {
+                currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+              });
+
+              const { unmount, rerender } = renderWithTheme(
+                <ThemeToggle currentTheme={currentTheme} onToggle={mockToggle} />,
+                currentTheme
+              );
+
+              const button = screen.getByRole('button');
+              await user.click(button);
+
+              // Verificar que se llamó el toggle
+              expect(mockToggle).toHaveBeenCalledTimes(1);
+
+              // Verificar que el tema cambió al opuesto
+              const expectedTheme = initialTheme === 'light' ? 'dark' : 'light';
+              expect(currentTheme).toBe(expectedTheme);
+
+              // Verificar que el icono cambió
+              rerender(
+                <ThemeProvider theme={getTheme(currentTheme)}>
+                  <ThemeToggle currentTheme={currentTheme} onToggle={mockToggle} />
+                </ThemeProvider>
+              );
+
+              const expectedIcon = expectedTheme === 'light' ? '🌙' : '☀️';
+              expect(button).toHaveTextContent(expectedIcon);
+
+              // Limpiar el DOM para la siguiente iteración
+              unmount();
+            }
+          ),
+          { numRuns: 20 }
+        );
+      },
+      15000
+    );
+  });
 });

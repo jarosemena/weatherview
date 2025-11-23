@@ -1,11 +1,12 @@
 import { ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GlobalStyles } from './theme/GlobalStyles';
-import { theme } from './theme/theme';
+import { getTheme } from './theme/theme';
 import { WeatherProvider } from './context/WeatherContext';
 import { PreferencesProvider } from './context/PreferencesContext';
 import { ToastProvider } from './context/ToastContext';
 import { Dashboard } from './components/Dashboard/Dashboard';
+import { useUserPreferences } from './hooks/useUserPreferences';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,21 +18,29 @@ const queryClient = new QueryClient({
   }
 });
 
+function ThemedApp() {
+  const { theme } = useUserPreferences();
+
+  return (
+    <ThemeProvider theme={getTheme(theme)}>
+      <GlobalStyles />
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      <ToastProvider>
+        <WeatherProvider>
+          <Dashboard />
+        </WeatherProvider>
+      </ToastProvider>
+    </ThemeProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <PreferencesProvider>
-        <ThemeProvider theme={theme}>
-          <GlobalStyles />
-          <a href="#main-content" className="skip-link">
-            Skip to main content
-          </a>
-          <ToastProvider>
-            <WeatherProvider>
-              <Dashboard />
-            </WeatherProvider>
-          </ToastProvider>
-        </ThemeProvider>
+        <ThemedApp />
       </PreferencesProvider>
     </QueryClientProvider>
   );

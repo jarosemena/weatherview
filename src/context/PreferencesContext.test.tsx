@@ -57,7 +57,8 @@ describe('PreferencesContext', () => {
     expect(result.current.favoriteCities).toEqual(['London']);
     expect(storageService.set).toHaveBeenCalledWith('userPreferences', {
       favoriteCities: ['London'],
-      temperatureUnit: 'celsius'
+      temperatureUnit: 'celsius',
+      theme: 'light'
     });
   });
 
@@ -113,7 +114,8 @@ describe('PreferencesContext', () => {
     expect(result.current.temperatureUnit).toBe('fahrenheit');
     expect(storageService.set).toHaveBeenCalledWith('userPreferences', {
       favoriteCities: [],
-      temperatureUnit: 'fahrenheit'
+      temperatureUnit: 'fahrenheit',
+      theme: 'light'
     });
   });
 

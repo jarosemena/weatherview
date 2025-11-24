@@ -3,6 +3,7 @@ import { useWeatherData } from '../../hooks/useWeatherData';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 import { useMultipleCitiesWeather } from '../../hooks/useMultipleCitiesWeather';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { useToast } from '../../context/ToastContext';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
@@ -33,6 +34,7 @@ export function Dashboard() {
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [comparisonCities, setComparisonCities] = useState<string[]>([]);
+  const [visibleFavoritesCount, setVisibleFavoritesCount] = useState(8); // Initial load: 8 cards (2 rows of 4)
   
   // Fetch data for comparison cities
   const comparisonData = useMultipleCitiesWeather(comparisonCities);
@@ -140,6 +142,18 @@ export function Dashboard() {
     setUseDefaultCity(false);
   };
 
+  // Infinite scroll logic for favorites
+  const handleLoadMoreFavorites = () => {
+    setVisibleFavoritesCount(prev => Math.min(prev + 4, favoriteCities.length));
+  };
+
+  const hasMoreFavorites = visibleFavoritesCount < favoriteCities.length;
+  const sentinelRef = useInfiniteScroll({
+    onLoadMore: handleLoadMoreFavorites,
+    hasMore: hasMoreFavorites,
+    isLoading: favoritesData.some(city => city.isLoading)
+  });
+
   const isLoading = isGeoLoading || isWeatherLoading;
   const hasError = weatherError !== null;
 
@@ -229,21 +243,40 @@ export function Dashboard() {
 
                     {/* Favorites Grid - Show when 2+ favorites */}
                     {favoriteCities.length >= 2 && favoritesData.length > 0 && (
-                      <S.FavoritesGrid>
-                        {favoritesData
-                          .filter((cityData) => cityData.weather !== null)
-                          .map((cityData) => (
-                            <WeatherCard
-                              key={cityData.city}
-                              city={cityData.city}
-                              weatherData={cityData.weather!}
-                              unit={temperatureUnit}
-                              onFavoriteToggle={() => handleFavoriteToggle(cityData.city)}
-                              isFavorite={true}
-                              compact={true}
-                            />
-                          ))}
-                      </S.FavoritesGrid>
+                      <>
+                        <S.FavoritesGrid>
+                          {favoritesData
+                            .slice(0, visibleFavoritesCount)
+                            .filter((cityData) => cityData.weather !== null)
+                            .map((cityData) => (
+                              <WeatherCard
+                                key={cityData.city}
+                                city={cityData.city}
+                                weatherData={cityData.weather!}
+                                unit={temperatureUnit}
+                                onFavoriteToggle={() => handleFavoriteToggle(cityData.city)}
+                                isFavorite={true}
+                                compact={true}
+                              />
+                            ))}
+                        </S.FavoritesGrid>
+                        {/* Infinite scroll sentinel */}
+                        {hasMoreFavorites && (
+                          <div 
+                            ref={sentinelRef} 
+                            style={{ 
+                              height: '20px', 
+                              margin: '20px 0',
+                              textAlign: 'center',
+                              color: '#888',
+                              fontSize: '14px',
+                              fontStyle: 'italic'
+                            }}
+                          >
+                            Loading more favorites...
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {forecast.length > 0 && (

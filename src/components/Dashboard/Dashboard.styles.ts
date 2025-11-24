@@ -381,3 +381,11 @@ export const FavoritesGrid = styled.div`
     grid-template-columns: 1fr;
   }
 `;
+
+export const LoadingMessage = styled.div`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-style: italic;
+`;

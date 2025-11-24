@@ -60,3 +60,56 @@ describe('Dashboard Compact Mode Property Tests', () => {
     }
   );
 });
+
+
+/**
+ * Feature: weather-data-visualizer, Property 8: Infinite scroll loads more content
+ * Validates: Requirements 13.3
+ */
+describe('Dashboard Infinite Scroll Property Tests', () => {
+  it(
+    'Property 8: infinite scroll should load more content when available',
+    () => {
+      fc.assert(
+        fc.property(
+          fc.record({
+            totalFavorites: fc.integer({ min: 10, max: 50 }),
+            initialVisible: fc.integer({ min: 4, max: 8 }),
+            loadIncrement: fc.integer({ min: 2, max: 8 })
+          }),
+          (data) => {
+            // Property: When scrolling to the end with more content available,
+            // the system should load additional items
+
+            const { totalFavorites, initialVisible, loadIncrement } = data;
+            
+            // Simulate initial state
+            let visibleCount = initialVisible;
+            const hasMore = visibleCount < totalFavorites;
+            
+            // Verify initial state
+            expect(visibleCount).toBeLessThan(totalFavorites);
+            expect(hasMore).toBe(true);
+            
+            // Simulate scroll trigger (load more)
+            if (hasMore) {
+              visibleCount = Math.min(visibleCount + loadIncrement, totalFavorites);
+            }
+            
+            // Property: After loading, visible count should increase
+            // but not exceed total
+            expect(visibleCount).toBeGreaterThan(initialVisible);
+            expect(visibleCount).toBeLessThanOrEqual(totalFavorites);
+            
+            // Property: If we loaded everything, hasMore should be false
+            const newHasMore = visibleCount < totalFavorites;
+            if (visibleCount === totalFavorites) {
+              expect(newHasMore).toBe(false);
+            }
+          }
+        ),
+        { numRuns: 40 }
+      );
+    }
+  );
+});

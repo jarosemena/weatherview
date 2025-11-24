@@ -386,44 +386,88 @@ async function getNearbyCities(
   radius: number = 100
 ): Promise<Array<City & { distance: number }>> {
   try {
-    // Search for cities in a bounding box around the coordinates
-    // Approximate: 1 degree latitude ≈ 111 km
-    const latOffset = radius / 111;
-    const lonOffset = radius / (111 * Math.cos((lat * Math.PI) / 180));
+    // Use a hardcoded list of major cities and calculate distances
+    // This is a workaround since the geocoding API doesn't support radius search
+    const majorCities = [
+      { name: 'London', lat: 51.5074, lon: -0.1278, country: 'GB' },
+      { name: 'Paris', lat: 48.8566, lon: 2.3522, country: 'FR' },
+      { name: 'Berlin', lat: 52.5200, lon: 13.4050, country: 'DE' },
+      { name: 'Madrid', lat: 40.4168, lon: -3.7038, country: 'ES' },
+      { name: 'Rome', lat: 41.9028, lon: 12.4964, country: 'IT' },
+      { name: 'Amsterdam', lat: 52.3676, lon: 4.9041, country: 'NL' },
+      { name: 'Brussels', lat: 50.8503, lon: 4.3517, country: 'BE' },
+      { name: 'Vienna', lat: 48.2082, lon: 16.3738, country: 'AT' },
+      { name: 'Prague', lat: 50.0755, lon: 14.4378, country: 'CZ' },
+      { name: 'Copenhagen', lat: 55.6761, lon: 12.5683, country: 'DK' },
+      { name: 'Stockholm', lat: 59.3293, lon: 18.0686, country: 'SE' },
+      { name: 'Oslo', lat: 59.9139, lon: 10.7522, country: 'NO' },
+      { name: 'Helsinki', lat: 60.1699, lon: 24.9384, country: 'FI' },
+      { name: 'Warsaw', lat: 52.2297, lon: 21.0122, country: 'PL' },
+      { name: 'Budapest', lat: 47.4979, lon: 19.0402, country: 'HU' },
+      { name: 'Lisbon', lat: 38.7223, lon: -9.1393, country: 'PT' },
+      { name: 'Dublin', lat: 53.3498, lon: -6.2603, country: 'IE' },
+      { name: 'Athens', lat: 37.9838, lon: 23.7275, country: 'GR' },
+      { name: 'New York', lat: 40.7128, lon: -74.0060, country: 'US' },
+      { name: 'Los Angeles', lat: 34.0522, lon: -118.2437, country: 'US' },
+      { name: 'Chicago', lat: 41.8781, lon: -87.6298, country: 'US' },
+      { name: 'Houston', lat: 29.7604, lon: -95.3698, country: 'US' },
+      { name: 'Phoenix', lat: 33.4484, lon: -112.0740, country: 'US' },
+      { name: 'Philadelphia', lat: 39.9526, lon: -75.1652, country: 'US' },
+      { name: 'San Antonio', lat: 29.4241, lon: -98.4936, country: 'US' },
+      { name: 'San Diego', lat: 32.7157, lon: -117.1611, country: 'US' },
+      { name: 'Dallas', lat: 32.7767, lon: -96.7970, country: 'US' },
+      { name: 'San Jose', lat: 37.3382, lon: -121.8863, country: 'US' },
+      { name: 'Toronto', lat: 43.6532, lon: -79.3832, country: 'CA' },
+      { name: 'Montreal', lat: 45.5017, lon: -73.5673, country: 'CA' },
+      { name: 'Vancouver', lat: 49.2827, lon: -123.1207, country: 'CA' },
+      { name: 'Mexico City', lat: 19.4326, lon: -99.1332, country: 'MX' },
+      { name: 'Tokyo', lat: 35.6762, lon: 139.6503, country: 'JP' },
+      { name: 'Seoul', lat: 37.5665, lon: 126.9780, country: 'KR' },
+      { name: 'Beijing', lat: 39.9042, lon: 116.4074, country: 'CN' },
+      { name: 'Shanghai', lat: 31.2304, lon: 121.4737, country: 'CN' },
+      { name: 'Mumbai', lat: 19.0760, lon: 72.8777, country: 'IN' },
+      { name: 'Delhi', lat: 28.7041, lon: 77.1025, country: 'IN' },
+      { name: 'Sydney', lat: -33.8688, lon: 151.2093, country: 'AU' },
+      { name: 'Melbourne', lat: -37.8136, lon: 144.9631, country: 'AU' },
+      { name: 'Brisbane', lat: -27.4698, lon: 153.0251, country: 'AU' },
+      { name: 'São Paulo', lat: -23.5505, lon: -46.6333, country: 'BR' },
+      { name: 'Rio de Janeiro', lat: -22.9068, lon: -43.1729, country: 'BR' },
+      { name: 'Buenos Aires', lat: -34.6037, lon: -58.3816, country: 'AR' },
+      { name: 'Santiago', lat: -33.4489, lon: -70.6693, country: 'CL' },
+      { name: 'Lima', lat: -12.0464, lon: -77.0428, country: 'PE' },
+      { name: 'Bogotá', lat: 4.7110, lon: -74.0721, country: 'CO' },
+      { name: 'Cairo', lat: 30.0444, lon: 31.2357, country: 'EG' },
+      { name: 'Lagos', lat: 6.5244, lon: 3.3792, country: 'NG' },
+      { name: 'Johannesburg', lat: -26.2041, lon: 28.0473, country: 'ZA' },
+      { name: 'Singapore', lat: 1.3521, lon: 103.8198, country: 'SG' },
+      { name: 'Bangkok', lat: 13.7563, lon: 100.5018, country: 'TH' },
+      { name: 'Manila', lat: 14.5995, lon: 120.9842, country: 'PH' },
+      { name: 'Jakarta', lat: -6.2088, lon: 106.8456, country: 'ID' },
+      { name: 'Istanbul', lat: 41.0082, lon: 28.9784, country: 'TR' },
+      { name: 'Moscow', lat: 55.7558, lon: 37.6173, country: 'RU' },
+      { name: 'Saint Petersburg', lat: 59.9311, lon: 30.3609, country: 'RU' }
+    ];
 
-    const response = await retryWithBackoff(() =>
-      axios.get<GeoResponse>(`${GEO_URL}/search`, {
-        params: {
-          name: '', // Empty to get all cities in the area
-          count: 50,
-          language: 'en',
-          format: 'json'
-        }
-      })
-    );
-
-    if (!response.data.results || response.data.results.length === 0) {
-      return [];
-    }
-
-    // Calculate distances and filter by radius
-    const citiesWithDistance = response.data.results
-      .map((result) => {
-        const distance = calculateDistance(lat, lon, result.latitude, result.longitude);
+    // Calculate distances for all cities
+    const citiesWithDistance = majorCities
+      .map((city) => {
+        const distance = calculateDistance(lat, lon, city.lat, city.lon);
         return {
-          name: result.name,
-          country: result.country,
-          state: result.admin1,
+          name: city.name,
+          country: city.country,
+          state: undefined,
           coordinates: {
-            lat: result.latitude,
-            lon: result.longitude
+            lat: city.lat,
+            lon: city.lon
           },
           distance
         };
       })
-      .filter((city) => city.distance <= radius && city.distance > 0) // Exclude the exact location
       .sort((a, b) => a.distance - b.distance) // Sort by distance ascending
-      .slice(0, 10); // Limit to 10 nearest cities
+      .slice(0, 10); // Get the 10 nearest cities
+
+    console.log('Nearby cities found:', citiesWithDistance.length, 'for location:', lat, lon);
+    console.log('Nearest city:', citiesWithDistance[0]?.name, citiesWithDistance[0]?.distance, 'km');
 
     return citiesWithDistance;
   } catch (error) {

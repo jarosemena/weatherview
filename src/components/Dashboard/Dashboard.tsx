@@ -7,6 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
+import { NearbyCities } from '../NearbyCities/NearbyCities';
 import { ErrorMessage } from '../ErrorMessage/ErrorMessage';
 import { LoadingSpinner } from '../LoadingSpinner/LoadingSpinner';
 import type { City, ChartType, TimeRange } from '../../types/weather.types';
@@ -129,6 +130,11 @@ export function Dashboard() {
 
   const isFavorite = (city: string) => {
     return favoriteCities.includes(city);
+  };
+
+  const handleNearbyCitySelect = (city: City) => {
+    fetchWeatherByCity(city.name);
+    setUseDefaultCity(false);
   };
 
   const isLoading = isGeoLoading || isWeatherLoading;
@@ -385,6 +391,17 @@ export function Dashboard() {
                 </S.FavoritesList>
               )}
             </S.SidebarCard>
+
+            {/* Nearby Cities */}
+            {coordinates && !geoError && (
+              <S.SidebarCard>
+                <NearbyCities
+                  coordinates={coordinates}
+                  onCitySelect={handleNearbyCitySelect}
+                  radius={100}
+                />
+              </S.SidebarCard>
+            )}
           </S.SidebarSection>
         </S.MainLayout>
       </S.ContentSection>

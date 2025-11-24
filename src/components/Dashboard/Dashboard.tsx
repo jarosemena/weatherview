@@ -36,6 +36,9 @@ export function Dashboard() {
   
   // Fetch data for comparison cities
   const comparisonData = useMultipleCitiesWeather(comparisonCities);
+  
+  // Fetch data for favorite cities
+  const favoritesData = useMultipleCitiesWeather(favoriteCities);
 
   const handleToggleComparisonMode = () => {
     setIsComparisonMode(!isComparisonMode);
@@ -223,6 +226,25 @@ export function Dashboard() {
                         isFavorite={isFavorite(currentWeather.city)}
                       />
                     </S.WeatherSection>
+
+                    {/* Favorites Grid - Show when 2+ favorites */}
+                    {favoriteCities.length >= 2 && favoritesData.length > 0 && (
+                      <S.FavoritesGrid>
+                        {favoritesData
+                          .filter((cityData) => cityData.weather !== null)
+                          .map((cityData) => (
+                            <WeatherCard
+                              key={cityData.city}
+                              city={cityData.city}
+                              weatherData={cityData.weather!}
+                              unit={temperatureUnit}
+                              onFavoriteToggle={() => handleFavoriteToggle(cityData.city)}
+                              isFavorite={true}
+                              compact={true}
+                            />
+                          ))}
+                      </S.FavoritesGrid>
+                    )}
 
                     {forecast.length > 0 && (
                       <S.ChartSection>

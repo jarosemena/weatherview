@@ -360,9 +360,82 @@ async function searchCities(query: string): Promise<City[]> {
   }
 }
 
+// Haversine formula to calculate distance between two coordinates in kilometers
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+async function getNearbyCities(
+  lat: number,
+  lon: number,
+  radius: number = 100
+): Promise<Array<City & { distance: number }>> {
+  try {
+    // Search for cities in a bounding box around the coordinates
+    // Approximate: 1 degree latitude ≈ 111 km
+    const latOffset = radius / 111;
+    const lonOffset = radius / (111 * Math.cos((lat * Math.PI) / 180));
+
+    const response = await retryWithBackoff(() =>
+      axios.get<GeoResponse>(`${GEO_URL}/search`, {
+        params: {
+          name: '', // Empty to get all cities in the area
+          count: 50,
+          language: 'en',
+          format: 'json'
+        }
+      })
+    );
+
+    if (!response.data.results || response.data.results.length === 0) {
+      return [];
+    }
+
+    // Calculate distances and filter by radius
+    const citiesWithDistance = response.data.results
+      .map((result) => {
+        const distance = calculateDistance(lat, lon, result.latitude, result.longitude);
+        return {
+          name: result.name,
+          country: result.country,
+          state: result.admin1,
+          coordinates: {
+            lat: result.latitude,
+            lon: result.longitude
+          },
+          distance
+        };
+      })
+      .filter((city) => city.distance <= radius && city.distance > 0) // Exclude the exact location
+      .sort((a, b) => a.distance - b.distance) // Sort by distance ascending
+      .slice(0, 10); // Limit to 10 nearest cities
+
+    return citiesWithDistance;
+  } catch (error) {
+    console.error('Error fetching nearby cities:', error);
+    throw new Error('Failed to fetch nearby cities');
+  }
+}
+
 export const weatherApi = {
   getCurrentWeather,
   getCurrentWeatherByCoords,
   getForecast,
-  searchCities
+  searchCities,
+  getNearbyCities
 };

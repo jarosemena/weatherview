@@ -1,13 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { storageService } from '../services/storageService';
-import type { UserPreferences, TemperatureUnit } from '../types/preferences.types';
+import type { UserPreferences, TemperatureUnit, Theme } from '../types/preferences.types';
 
 interface PreferencesContextValue {
   favoriteCities: string[];
   temperatureUnit: TemperatureUnit;
+  theme: Theme;
   addFavorite: (city: string) => void;
   removeFavorite: (city: string) => void;
   setTemperatureUnit: (unit: TemperatureUnit) => void;
+  toggleTheme: () => void;
 }
 
 const PreferencesContext = createContext<PreferencesContextValue | undefined>(undefined);
@@ -16,7 +18,8 @@ const STORAGE_KEY = 'userPreferences';
 
 const defaultPreferences: UserPreferences = {
   favoriteCities: [],
-  temperatureUnit: 'celsius'
+  temperatureUnit: 'celsius',
+  theme: 'light'
 };
 
 interface PreferencesProviderProps {
@@ -60,12 +63,21 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
     }));
   }, []);
 
+  const toggleTheme = useCallback(() => {
+    setPreferences(prev => ({
+      ...prev,
+      theme: prev.theme === 'light' ? 'dark' : 'light'
+    }));
+  }, []);
+
   const value: PreferencesContextValue = {
     favoriteCities: preferences.favoriteCities,
     temperatureUnit: preferences.temperatureUnit,
+    theme: preferences.theme || 'light',
     addFavorite,
     removeFavorite,
-    setTemperatureUnit
+    setTemperatureUnit,
+    toggleTheme
   };
 
   return (

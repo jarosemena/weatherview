@@ -6,6 +6,8 @@ import { useMultipleCitiesWeather } from '../../hooks/useMultipleCitiesWeather';
 import { useToast } from '../../context/ToastContext';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
+import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
+import { NearbyCities } from '../NearbyCities/NearbyCities';
 import { ErrorMessage } from '../ErrorMessage/ErrorMessage';
 import { LoadingSpinner } from '../LoadingSpinner/LoadingSpinner';
 import type { City, ChartType, TimeRange } from '../../types/weather.types';
@@ -22,7 +24,7 @@ const MAX_COMPARISON_CITIES = 4;
 export function Dashboard() {
   const { currentWeather, forecast, isLoading: isWeatherLoading, error: weatherError, errorMessage, isUsingCache, fetchWeatherByCity, fetchWeatherByCoords, refetch } = useWeatherData();
   const { coordinates, isLoading: isGeoLoading, error: geoError, requestLocation } = useGeolocation();
-  const { temperatureUnit, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit } = useUserPreferences();
+  const { temperatureUnit, theme, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit, toggleTheme } = useUserPreferences();
   const { showWarning, showError, showInfo } = useToast();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
@@ -130,6 +132,11 @@ export function Dashboard() {
     return favoriteCities.includes(city);
   };
 
+  const handleNearbyCitySelect = (city: City) => {
+    fetchWeatherByCity(city.name);
+    setUseDefaultCity(false);
+  };
+
   const isLoading = isGeoLoading || isWeatherLoading;
   const hasError = weatherError !== null;
 
@@ -158,6 +165,7 @@ export function Dashboard() {
                 °F
               </S.UnitButton>
             </S.UnitToggle>
+            <ThemeToggle currentTheme={theme} onToggle={toggleTheme} />
           </S.HeaderControls>
         </S.HeaderContent>
       </S.HeaderSection>
@@ -383,6 +391,17 @@ export function Dashboard() {
                 </S.FavoritesList>
               )}
             </S.SidebarCard>
+
+            {/* Nearby Cities */}
+            {coordinates && !geoError && (
+              <S.SidebarCard>
+                <NearbyCities
+                  coordinates={coordinates}
+                  onCitySelect={handleNearbyCitySelect}
+                  radius={100}
+                />
+              </S.SidebarCard>
+            )}
           </S.SidebarSection>
         </S.MainLayout>
       </S.ContentSection>

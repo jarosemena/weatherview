@@ -272,4 +272,103 @@ describe('weatherApi', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('getNearbyCities', () => {
+    it('should return nearby cities within radius sorted by distance', async () => {
+      const mockResponse = {
+        data: {
+          results: [
+            {
+              name: 'Westminster',
+              country: 'GB',
+              admin1: 'England',
+              latitude: 51.4975,
+              longitude: -0.1357
+            },
+            {
+              name: 'Camden',
+              country: 'GB',
+              admin1: 'England',
+              latitude: 51.5424,
+              longitude: -0.1426
+            },
+            {
+              name: 'Brighton',
+              country: 'GB',
+              admin1: 'England',
+              latitude: 50.8225,
+              longitude: -0.1372
+            }
+          ]
+        }
+      };
+
+      mockedAxios.get.mockResolvedValueOnce(mockResponse);
+
+      // London coordinates
+      const result = await weatherApi.getNearbyCities(51.5074, -0.1278, 100);
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toHaveProperty('distance');
+      expect(result[0]).toHaveProperty('name');
+      expect(result[0]).toHaveProperty('coordinates');
+      
+      // Verify sorted by distance
+      for (let i = 1; i < result.length; i++) {
+        expect(result[i].distance).toBeGreaterThanOrEqual(result[i - 1].distance);
+      }
+      
+      // Verify all within radius
+      result.forEach(city => {
+        expect(city.distance).toBeLessThanOrEqual(100);
+        expect(city.distance).toBeGreaterThan(0);
+      });
+    });
+
+    it('should return empty array when no cities found', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: { results: [] } });
+
+      const result = await weatherApi.getNearbyCities(0, 0, 100);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should filter cities outside radius', async () => {
+      const mockResponse = {
+        data: {
+          results: [
+            {
+              name: 'Nearby City',
+              country: 'GB',
+              admin1: 'England',
+              latitude: 51.5074,
+              longitude: -0.1278
+            },
+            {
+              name: 'Far City',
+              country: 'FR',
+              admin1: 'Île-de-France',
+              latitude: 48.8566,
+              longitude: 2.3522
+            }
+          ]
+        }
+      };
+
+      mockedAxios.get.mockResolvedValueOnce(mockResponse);
+
+      const result = await weatherApi.getNearbyCities(51.5074, -0.1278, 50);
+
+      // Far City (Paris) should be filtered out as it's > 300km away
+      expect(result.every(city => city.distance <= 50)).toBe(true);
+    });
+
+    it('should handle errors gracefully', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      await expect(weatherApi.getNearbyCities(51.5074, -0.1278, 100)).rejects.toThrow(
+        'Failed to fetch nearby cities'
+      );
+    });
+  });
 });

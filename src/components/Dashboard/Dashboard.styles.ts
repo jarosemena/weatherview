@@ -3,6 +3,7 @@ import styled from 'styled-components';
 export const DashboardContainer = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.background.secondary};
+  transition: background-color 0.3s ease;
 `;
 
 export const HeaderSection = styled.header`
@@ -12,6 +13,7 @@ export const HeaderSection = styled.header`
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
@@ -41,6 +43,7 @@ export const Logo = styled.h1`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
+  transition: color 0.3s ease;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     font-size: ${({ theme }) => theme.typography.fontSize.lg};

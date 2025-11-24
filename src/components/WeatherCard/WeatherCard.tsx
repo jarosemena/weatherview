@@ -9,6 +9,7 @@ export interface WeatherCardProps {
   unit: TemperatureUnit;
   onFavoriteToggle?: () => void;
   isFavorite?: boolean;
+  compact?: boolean;
 }
 
 export function WeatherCard({
@@ -16,7 +17,8 @@ export function WeatherCard({
   weatherData,
   unit,
   onFavoriteToggle,
-  isFavorite = false
+  isFavorite = false,
+  compact = false
 }: WeatherCardProps) {
   const convertTemp = (temp: number) => {
     return convertTemperature(temp, 'celsius', unit);
@@ -30,13 +32,14 @@ export function WeatherCard({
   const iconUrl = `https://openweathermap.org/img/wn/${weatherData.conditions.icon}@2x.png`;
 
   return (
-    <S.CardContainer role="article" aria-label={`Weather information for ${weatherData.city}`}>
-      <S.CityHeader>
-        <S.CityName>{weatherData.city}, {weatherData.country}</S.CityName>
+    <S.CardContainer $compact={compact} role="article" aria-label={`Weather information for ${weatherData.city}`}>
+      <S.CityHeader $compact={compact}>
+        <S.CityName $compact={compact}>{weatherData.city}, {weatherData.country}</S.CityName>
         {onFavoriteToggle && (
           <S.FavoriteButton
             onClick={onFavoriteToggle}
             $isFavorite={isFavorite}
+            $compact={compact}
             aria-label={isFavorite ? `Remove ${weatherData.city} from favorites` : `Add ${weatherData.city} to favorites`}
             aria-pressed={isFavorite}
           >
@@ -45,23 +48,24 @@ export function WeatherCard({
         )}
       </S.CityHeader>
 
-      <S.WeatherIcon>
+      <S.WeatherIcon $compact={compact}>
         <S.WeatherImage
+          $compact={compact}
           src={iconUrl}
           alt={`Weather icon showing ${weatherData.conditions.description}`}
         />
       </S.WeatherIcon>
 
-      <S.TemperatureDisplay>
-        <S.Temperature aria-label={`Current temperature ${formatTemp(weatherData.temperature.current)}`}>
+      <S.TemperatureDisplay $compact={compact}>
+        <S.Temperature $compact={compact} aria-label={`Current temperature ${formatTemp(weatherData.temperature.current)}`}>
           {formatTemp(weatherData.temperature.current)}
         </S.Temperature>
-        <S.Conditions>{weatherData.conditions.main}</S.Conditions>
-        <S.Description>{weatherData.conditions.description}</S.Description>
-        <S.FeelsLike aria-label={`Feels like ${formatTemp(weatherData.temperature.feelsLike)}`}>
+        <S.Conditions $compact={compact}>{weatherData.conditions.main}</S.Conditions>
+        <S.Description $compact={compact}>{weatherData.conditions.description}</S.Description>
+        <S.FeelsLike $compact={compact} aria-label={`Feels like ${formatTemp(weatherData.temperature.feelsLike)}`}>
           Feels like {formatTemp(weatherData.temperature.feelsLike)}
         </S.FeelsLike>
-        <S.MinMaxTemp>
+        <S.MinMaxTemp $compact={compact}>
           <span aria-label={`Minimum temperature ${formatTemp(weatherData.temperature.min)}`}>
             ↓ {formatTemp(weatherData.temperature.min)}
           </span>
@@ -71,7 +75,7 @@ export function WeatherCard({
         </S.MinMaxTemp>
       </S.TemperatureDisplay>
 
-      <S.WeatherDetails role="list" aria-label="Weather details">
+      <S.WeatherDetails $compact={compact} role="list" aria-label="Weather details">
         <S.DetailItem role="listitem">
           <S.DetailLabel>Humidity</S.DetailLabel>
           <S.DetailValue aria-label={`Humidity ${weatherData.humidity} percent`}>

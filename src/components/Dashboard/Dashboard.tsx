@@ -478,7 +478,6 @@ export function Dashboard() {
                 <NearbyCities
                   coordinates={coordinates}
                   onCitySelect={handleNearbyCitySelect}
-                  radius={100}
                 />
               </S.SidebarCard>
             )}

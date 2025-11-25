@@ -46,7 +46,36 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
   const singleCityData = !isMultiCity ? data as ForecastData[] : [];
   const multiCityData = isMultiCity ? data as ForecastData[][] : [];
 
-  if ((isMultiCity && multiCityData.length === 0) || (!isMultiCity && singleCityData.length === 0)) {
+  // Filter data based on timeRange
+  const filterDataByTimeRange = (forecastData: ForecastData[]): ForecastData[] => {
+    const now = new Date();
+    let maxDate: Date;
+    
+    switch (timeRange) {
+      case '24h':
+        maxDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        break;
+      case '7d':
+        maxDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        maxDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        return forecastData;
+    }
+    
+    return forecastData.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate <= maxDate;
+    });
+  };
+
+  // Apply filtering
+  const filteredSingleCityData = filterDataByTimeRange(singleCityData);
+  const filteredMultiCityData = multiCityData.map(cityData => filterDataByTimeRange(cityData));
+
+  if ((isMultiCity && filteredMultiCityData.length === 0) || (!isMultiCity && filteredSingleCityData.length === 0)) {
     return (
       <S.ChartContainer>
         <S.NoDataMessage>No data available</S.NoDataMessage>
@@ -88,10 +117,10 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
   const getData = () => {
     if (isMultiCity && cities.length > 0) {
       // Multi-city comparison mode
-      const labels = multiCityData[0]?.map(item => item.date) || [];
+      const labels = filteredMultiCityData[0]?.map(item => item.date) || [];
       
       const datasets = cities.map((city, index) => {
-        const cityData = multiCityData[index] || [];
+        const cityData = filteredMultiCityData[index] || [];
         const values = getValues(cityData);
         const color = CHART_COLORS[index % CHART_COLORS.length];
 
@@ -108,8 +137,8 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
       return { labels, datasets };
     } else {
       // Single city mode
-      const labels = singleCityData.map(item => item.date);
-      const values = getValues(singleCityData);
+      const labels = filteredSingleCityData.map(item => item.date);
+      const values = getValues(filteredSingleCityData);
 
       return {
         labels,

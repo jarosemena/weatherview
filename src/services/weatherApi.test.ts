@@ -3,7 +3,7 @@ import axios from 'axios';
 import { weatherApi } from './weatherApi';
 
 vi.mock('axios');
-const mockedAxios = vi.mocked(axios);
+const mockedAxios = axios as any;
 
 describe('weatherApi', () => {
   beforeEach(() => {

@@ -361,3 +361,31 @@ export const CacheBadge = styled.div`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
+
+export const FavoritesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.lg};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.desktop}) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const LoadingMessage = styled.div`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-style: italic;
+`;

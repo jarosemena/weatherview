@@ -1,12 +1,13 @@
 import styled from 'styled-components';
 
-export const CardContainer = styled.div<{ $compact?: boolean }>`
+export const CardContainer = styled.div<{ $compact?: boolean; $clickable?: boolean }>`
   background: ${({ theme }) => theme.colors.background.main};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.md};
   padding: ${({ theme, $compact }) => $compact ? theme.spacing.md : theme.spacing.lg};
   transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
   animation: fadeInUp 0.5s ease-out;
+  cursor: ${({ $clickable }) => $clickable ? 'pointer' : 'default'};
 
   @keyframes fadeInUp {
     from {
@@ -22,6 +23,9 @@ export const CardContainer = styled.div<{ $compact?: boolean }>`
   &:hover {
     transform: translateY(-4px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
+    ${({ $clickable, theme }) => $clickable && `
+      background: ${theme.colors.background.secondary};
+    `}
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {

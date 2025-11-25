@@ -57,14 +57,14 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
     let maxDays: number;
     
     switch (timeRange) {
-      case '24h':
+      case '1d':
         maxDays = 1;
         break;
-      case '7d':
-        maxDays = 7;
+      case '3d':
+        maxDays = 3;
         break;
-      case '30d':
-        maxDays = 30;
+      case '5d':
+        maxDays = 5;
         break;
       default:
         return forecastData;
@@ -176,7 +176,9 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
         intersect: false,
         callbacks: {
           label: (context: any) => {
-            return `${context.dataset.label}: ${context.parsed.y}${getUnit()}`;
+            // Round to integer in tooltip
+            const roundedValue = Math.round(context.parsed.y);
+            return `${context.dataset.label}: ${roundedValue}${getUnit()}`;
           }
         }
       }
@@ -185,7 +187,16 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
       y: {
         beginAtZero: type === 'precipitation',
         ticks: {
-          callback: (value: any) => `${value}${getUnit()}`
+          // Round to integers and prevent duplicates
+          stepSize: 1,
+          callback: (value: any) => {
+            const roundedValue = Math.round(value);
+            // Only show integer values
+            if (value === roundedValue) {
+              return `${roundedValue}${getUnit()}`;
+            }
+            return null;
+          }
         }
       }
     }

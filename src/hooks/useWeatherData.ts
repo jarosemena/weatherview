@@ -9,7 +9,7 @@ export interface UseWeatherDataReturn {
   errorMessage: string | null;
   isUsingCache: boolean;
   fetchWeatherByCity: (city: string) => Promise<void>;
-  fetchWeatherByCoords: (lat: number, lon: number) => Promise<void>;
+  fetchWeatherByCoords: (lat: number, lon: number, preferredCityName?: string) => Promise<void>;
   refetch: () => void;
 }
 

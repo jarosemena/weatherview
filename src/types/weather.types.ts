@@ -93,5 +93,5 @@ export type GeolocationError = AppError & {
   type: typeof ErrorType.GEOLOCATION_ERROR;
 };
 
-export type TimeRange = '24h' | '7d' | '30d';
+export type TimeRange = '1d' | '3d' | '5d';
 export type ChartType = 'temperature' | 'precipitation' | 'wind';

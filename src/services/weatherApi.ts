@@ -200,7 +200,8 @@ async function getCurrentWeather(city: string): Promise<WeatherData> {
 
 async function getCurrentWeatherByCoords(
   lat: number,
-  lon: number
+  lon: number,
+  preferredCityName?: string
 ): Promise<WeatherData> {
   try {
     // First, try to get weather data for exact coordinates with exponential backoff
@@ -223,39 +224,44 @@ async function getCurrentWeatherByCoords(
       }
     );
 
-    // Try to get city name from reverse geocoding
-    let cityName = 'Current Location';
+    // Use preferred city name if provided, otherwise try reverse geocoding
+    let cityName = preferredCityName || 'Current Location';
     let country = '';
     let countryName = '';
     
-    try {
-      // Use Nominatim for reverse geocoding (free, no API key)
-      const reverseGeoResponse = await axios.get('https://nominatim.openstreetmap.org/reverse', {
-        params: {
-          lat,
-          lon,
-          format: 'json',
-          'accept-language': 'en'
-        },
-        headers: {
-          'User-Agent': 'WeatherDataVisualizer/1.0'
-        }
-      });
+    // Only do reverse geocoding if no preferred name was provided
+    if (!preferredCityName) {
+      try {
+        // Use Nominatim for reverse geocoding (free, no API key)
+        const reverseGeoResponse = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+          params: {
+            lat,
+            lon,
+            format: 'json',
+            'accept-language': 'en'
+          },
+          headers: {
+            'User-Agent': 'WeatherDataVisualizer/1.0'
+          }
+        });
 
-      if (reverseGeoResponse.data && reverseGeoResponse.data.address) {
-        const address = reverseGeoResponse.data.address;
-        // Prioritize actual city names over regions/states
-        // Only use county/state as last resort
-        cityName = address.city || address.town || address.village || address.municipality || 
-                   address.county || address.state_district || address.state || 'Current Location';
-        country = address.country_code?.toUpperCase() || '';
-        countryName = address.country || '';
-        
-        // Log for debugging
-        console.log('Reverse geocoding result:', { cityName, country, fullAddress: address });
+        if (reverseGeoResponse.data && reverseGeoResponse.data.address) {
+          const address = reverseGeoResponse.data.address;
+          // Prioritize actual city names over regions/states
+          // Only use county/state as last resort
+          cityName = address.city || address.town || address.village || address.municipality || 
+                     address.county || address.state_district || address.state || 'Current Location';
+          country = address.country_code?.toUpperCase() || '';
+          countryName = address.country || '';
+          
+          // Log for debugging
+          console.log('Reverse geocoding result:', { cityName, country, fullAddress: address });
+        }
+      } catch (geoError) {
+        console.warn('Reverse geocoding failed, using default location name');
       }
-    } catch (geoError) {
-      console.warn('Reverse geocoding failed, using default location name');
+    } else {
+      console.log(`Using preferred city name: ${preferredCityName}`);
     }
 
     return transformWeatherData(weatherResponse.data, cityName, country);
@@ -344,6 +350,36 @@ async function getForecast(city: string, days: number): Promise<ForecastData[]> 
     return transformForecastData(weatherResponse.data);
   } catch (error) {
     console.error(`Error fetching forecast for "${city}":`, error);
+    // Return empty array instead of throwing to prevent app crash
+    return [];
+  }
+}
+
+async function getForecastByCoords(lat: number, lon: number): Promise<ForecastData[]> {
+  try {
+    // Get forecast data directly using coordinates
+    const weatherResponse = await retryWithBackoff(() =>
+      axios.get<OpenMeteoWeatherResponse>(`${WEATHER_BASE_URL}/forecast`, {
+        params: {
+          latitude: lat,
+          longitude: lon,
+          current: 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl',
+          daily: 'temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant',
+          timezone: 'auto'
+        }
+      }),
+      {
+        maxRetries: 3,
+        initialDelay: 1000,
+        onRetry: (attempt) => {
+          console.log(`Retrying forecast request by coords (attempt ${attempt})...`);
+        }
+      }
+    );
+
+    return transformForecastData(weatherResponse.data);
+  } catch (error) {
+    console.error(`Error fetching forecast for coordinates (${lat}, ${lon}):`, error);
     // Return empty array instead of throwing to prevent app crash
     return [];
   }
@@ -486,6 +522,7 @@ export const weatherApi = {
   getCurrentWeather,
   getCurrentWeatherByCoords,
   getForecast,
+  getForecastByCoords,
   searchCities,
   getNearbyCities
 };

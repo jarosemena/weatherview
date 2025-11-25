@@ -25,13 +25,13 @@ const MAX_COMPARISON_CITIES = 4;
 export function Dashboard() {
   const { currentWeather, forecast, isLoading: isWeatherLoading, error: weatherError, errorMessage, isUsingCache, fetchWeatherByCity, fetchWeatherByCoords, refetch } = useWeatherData();
   const { coordinates, isLoading: isGeoLoading, error: geoError, requestLocation } = useGeolocation();
-  const { temperatureUnit, theme, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit, toggleTheme } = useUserPreferences();
+  const { temperatureUnit, theme, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit, toggleTheme, getFavoriteCoordinates } = useUserPreferences();
   const { showWarning, showError, showInfo } = useToast();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [chartType, setChartType] = useState<ChartType>('temperature');
-  const [timeRange, setTimeRange] = useState<TimeRange>('7d');
+  const [timeRange, setTimeRange] = useState<TimeRange>('3d');
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [comparisonCities, setComparisonCities] = useState<string[]>([]);
   const [visibleFavoritesCount, setVisibleFavoritesCount] = useState(8); // Initial load: 8 cards (2 rows of 4)
@@ -39,8 +39,8 @@ export function Dashboard() {
   // Fetch data for comparison cities
   const comparisonData = useMultipleCitiesWeather(comparisonCities);
   
-  // Fetch data for favorite cities
-  const favoritesData = useMultipleCitiesWeather(favoriteCities);
+  // Fetch data for favorite cities - pass coordinate lookup function
+  const favoritesData = useMultipleCitiesWeather(favoriteCities, getFavoriteCoordinates);
 
   // Debug log
   console.log('Favorites:', favoriteCities.length, 'Data loaded:', favoritesData.filter(d => d.weather !== null).length);
@@ -132,7 +132,9 @@ export function Dashboard() {
     if (isFavorite(city)) {
       removeFavorite(city);
     } else {
-      addFavorite(city);
+      // Pass coordinates if available from current weather
+      const coordinates = currentWeather?.city === city ? currentWeather.coordinates : undefined;
+      addFavorite(city, coordinates);
     }
   };
 
@@ -143,6 +145,19 @@ export function Dashboard() {
   const handleNearbyCitySelect = (city: City) => {
     fetchWeatherByCity(city.name);
     setUseDefaultCity(false);
+  };
+
+  const handleFavoriteClick = (city: string) => {
+    // Try to use coordinates if available
+    const coordinates = getFavoriteCoordinates(city);
+    if (coordinates) {
+      console.log(`Fetching weather for ${city} using coordinates:`, coordinates);
+      // Pass the city name as preferred name to maintain consistency
+      fetchWeatherByCoords(coordinates.lat, coordinates.lon, city);
+    } else {
+      console.log(`Fetching weather for ${city} using city name`);
+      fetchWeatherByCity(city);
+    }
   };
 
   // Infinite scroll logic for favorites
@@ -260,7 +275,7 @@ export function Dashboard() {
                                 onFavoriteToggle={() => handleFavoriteToggle(cityData.city)}
                                 isFavorite={true}
                                 compact={true}
-                                onClick={() => fetchWeatherByCity(cityData.city)}
+                                onClick={() => handleFavoriteClick(cityData.city)}
                               />
                             ))}
                           {/* Show loading state for favorites being fetched */}
@@ -320,22 +335,22 @@ export function Dashboard() {
                             <S.ControlLabel>Time Range</S.ControlLabel>
                             <S.ButtonGroup>
                               <S.ControlButton
-                                $active={timeRange === '24h'}
-                                onClick={() => setTimeRange('24h')}
+                                $active={timeRange === '1d'}
+                                onClick={() => setTimeRange('1d')}
                               >
-                                24h
+                                1d
                               </S.ControlButton>
                               <S.ControlButton
-                                $active={timeRange === '7d'}
-                                onClick={() => setTimeRange('7d')}
+                                $active={timeRange === '3d'}
+                                onClick={() => setTimeRange('3d')}
                               >
-                                7d
+                                3d
                               </S.ControlButton>
                               <S.ControlButton
-                                $active={timeRange === '30d'}
-                                onClick={() => setTimeRange('30d')}
+                                $active={timeRange === '5d'}
+                                onClick={() => setTimeRange('5d')}
                               >
-                                30d
+                                5d
                               </S.ControlButton>
                             </S.ButtonGroup>
                           </S.ControlGroup>
@@ -392,22 +407,22 @@ export function Dashboard() {
                             <S.ControlLabel>Time Range</S.ControlLabel>
                             <S.ButtonGroup>
                               <S.ControlButton
-                                $active={timeRange === '24h'}
-                                onClick={() => setTimeRange('24h')}
+                                $active={timeRange === '1d'}
+                                onClick={() => setTimeRange('1d')}
                               >
-                                24h
+                                1d
                               </S.ControlButton>
                               <S.ControlButton
-                                $active={timeRange === '7d'}
-                                onClick={() => setTimeRange('7d')}
+                                $active={timeRange === '3d'}
+                                onClick={() => setTimeRange('3d')}
                               >
-                                7d
+                                3d
                               </S.ControlButton>
                               <S.ControlButton
-                                $active={timeRange === '30d'}
-                                onClick={() => setTimeRange('30d')}
+                                $active={timeRange === '5d'}
+                                onClick={() => setTimeRange('5d')}
                               >
-                                30d
+                                5d
                               </S.ControlButton>
                             </S.ButtonGroup>
                           </S.ControlGroup>
@@ -442,7 +457,7 @@ export function Dashboard() {
                 <S.FavoritesList>
                   {favoriteCities.map((city) => (
                     <S.FavoriteItem key={city}>
-                      <S.FavoriteName onClick={() => fetchWeatherByCity(city)}>
+                      <S.FavoriteName onClick={() => handleFavoriteClick(city)}>
                         {city}
                       </S.FavoriteName>
                       <S.RemoveFavoriteButton

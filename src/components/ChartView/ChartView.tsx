@@ -46,7 +46,44 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
   const singleCityData = !isMultiCity ? data as ForecastData[] : [];
   const multiCityData = isMultiCity ? data as ForecastData[][] : [];
 
-  if ((isMultiCity && multiCityData.length === 0) || (!isMultiCity && singleCityData.length === 0)) {
+  // Filter data based on timeRange
+  const filterDataByTimeRange = (forecastData: ForecastData[]): ForecastData[] => {
+    if (!forecastData || forecastData.length === 0) {
+      return forecastData;
+    }
+    
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Start of today
+    let maxDays: number;
+    
+    switch (timeRange) {
+      case '1d':
+        maxDays = 1;
+        break;
+      case '3d':
+        maxDays = 3;
+        break;
+      case '5d':
+        maxDays = 5;
+        break;
+      default:
+        return forecastData;
+    }
+    
+    // If we have less data than requested, return all data
+    if (forecastData.length <= maxDays) {
+      return forecastData;
+    }
+    
+    // Otherwise, limit to the requested number of days
+    return forecastData.slice(0, maxDays);
+  };
+
+  // Apply filtering
+  const filteredSingleCityData = filterDataByTimeRange(singleCityData);
+  const filteredMultiCityData = multiCityData.map(cityData => filterDataByTimeRange(cityData));
+
+  if ((isMultiCity && filteredMultiCityData.length === 0) || (!isMultiCity && filteredSingleCityData.length === 0)) {
     return (
       <S.ChartContainer>
         <S.NoDataMessage>No data available</S.NoDataMessage>
@@ -88,10 +125,10 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
   const getData = () => {
     if (isMultiCity && cities.length > 0) {
       // Multi-city comparison mode
-      const labels = multiCityData[0]?.map(item => item.date) || [];
+      const labels = filteredMultiCityData[0]?.map(item => item.date) || [];
       
       const datasets = cities.map((city, index) => {
-        const cityData = multiCityData[index] || [];
+        const cityData = filteredMultiCityData[index] || [];
         const values = getValues(cityData);
         const color = CHART_COLORS[index % CHART_COLORS.length];
 
@@ -108,8 +145,8 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
       return { labels, datasets };
     } else {
       // Single city mode
-      const labels = singleCityData.map(item => item.date);
-      const values = getValues(singleCityData);
+      const labels = filteredSingleCityData.map(item => item.date);
+      const values = getValues(filteredSingleCityData);
 
       return {
         labels,
@@ -139,7 +176,9 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
         intersect: false,
         callbacks: {
           label: (context: any) => {
-            return `${context.dataset.label}: ${context.parsed.y}${getUnit()}`;
+            // Round to integer in tooltip
+            const roundedValue = Math.round(context.parsed.y);
+            return `${context.dataset.label}: ${roundedValue}${getUnit()}`;
           }
         }
       }
@@ -148,7 +187,16 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
       y: {
         beginAtZero: type === 'precipitation',
         ticks: {
-          callback: (value: any) => `${value}${getUnit()}`
+          // Round to integers and prevent duplicates
+          stepSize: 1,
+          callback: (value: any) => {
+            const roundedValue = Math.round(value);
+            // Only show integer values
+            if (value === roundedValue) {
+              return `${roundedValue}${getUnit()}`;
+            }
+            return null;
+          }
         }
       }
     }

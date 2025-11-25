@@ -47,12 +47,28 @@ export const SuggestionsList = styled.ul`
   margin: 0;
   padding: 0;
   list-style: none;
+  animation: slideDown 0.2s ease-out;
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 export const SuggestionItem = styled.li`
   padding: ${({ theme }) => theme.spacing.md};
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
   border-bottom: 1px solid ${({ theme }) => theme.colors.background.secondary};
 
   &:last-child {
@@ -61,12 +77,29 @@ export const SuggestionItem = styled.li`
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.background.secondary};
+    transform: translateX(4px);
   }
 
   &:focus {
     outline: 2px solid ${({ theme }) => theme.colors.primary};
     outline-offset: -2px;
     background-color: ${({ theme }) => theme.colors.background.secondary};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      transform: none;
+    }
+    
+    &:active {
+      transform: none;
+    }
   }
 `;
 

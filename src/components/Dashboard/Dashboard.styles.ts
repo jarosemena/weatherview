@@ -3,6 +3,7 @@ import styled from 'styled-components';
 export const DashboardContainer = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.colors.background.secondary};
+  transition: background-color 0.3s ease;
 `;
 
 export const HeaderSection = styled.header`
@@ -12,6 +13,7 @@ export const HeaderSection = styled.header`
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
@@ -41,6 +43,7 @@ export const Logo = styled.h1`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
+  transition: color 0.3s ease;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     font-size: ${({ theme }) => theme.typography.fontSize.lg};
@@ -357,4 +360,32 @@ export const CacheBadge = styled.div`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   margin-bottom: ${({ theme }) => theme.spacing.md};
+`;
+
+export const FavoritesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.lg};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.desktop}) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const LoadingMessage = styled.div`
+  text-align: center;
+  padding: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-style: italic;
 `;

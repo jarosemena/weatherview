@@ -10,16 +10,32 @@ export interface CityWeatherData {
   error: Error | null;
 }
 
-export function useMultipleCitiesWeather(cities: string[]): CityWeatherData[] {
+export function useMultipleCitiesWeather(
+  cities: string[], 
+  getCityCoordinates?: (city: string) => { lat: number; lon: number } | undefined
+): CityWeatherData[] {
   // Fetch weather for all cities
   const weatherQueries = useQueries({
-    queries: cities.map(city => ({
-      queryKey: ['weather', city],
-      queryFn: () => weatherApi.getCurrentWeather(city),
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
-      enabled: !!city
-    }))
+    queries: cities.map(city => {
+      const coordinates = getCityCoordinates?.(city);
+      
+      return {
+        queryKey: coordinates 
+          ? ['weather', 'coords', coordinates.lat, coordinates.lon, city]
+          : ['weather', city],
+        queryFn: () => {
+          if (coordinates) {
+            // Use coordinates with preferred city name
+            return weatherApi.getCurrentWeatherByCoords(coordinates.lat, coordinates.lon, city);
+          }
+          // Fallback to city name search
+          return weatherApi.getCurrentWeather(city);
+        },
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        enabled: !!city
+      };
+    })
   });
 
   // Fetch forecast for all cities

@@ -231,3 +231,158 @@ describe('WeatherCard', () => {
     expect(screen.getByText(/71.6°F/)).toBeInTheDocument(); // max
   });
 });
+
+  describe('Compact Mode', () => {
+    it('should render in compact mode when compact prop is true', () => {
+      renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={true}
+        />
+      );
+
+      expect(screen.getByText('London, GB')).toBeInTheDocument();
+      expect(screen.getByText('20°C')).toBeInTheDocument();
+      expect(screen.getByText('Clouds')).toBeInTheDocument();
+    });
+
+    it('should hide description in compact mode', () => {
+      renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={true}
+        />
+      );
+
+      const description = screen.queryByText('scattered clouds');
+      expect(description).toBeInTheDocument();
+      // Description should have display: none in compact mode
+    });
+
+    it('should hide feels like temperature in compact mode', () => {
+      renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={true}
+        />
+      );
+
+      const feelsLike = screen.queryByText(/Feels like/);
+      expect(feelsLike).toBeInTheDocument();
+      // Feels like should have display: none in compact mode
+    });
+
+    it('should hide min/max temperatures in compact mode', () => {
+      renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={true}
+        />
+      );
+
+      const minTemp = screen.queryByText(/↓ 18°C/);
+      const maxTemp = screen.queryByText(/↑ 22°C/);
+      expect(minTemp).toBeInTheDocument();
+      expect(maxTemp).toBeInTheDocument();
+      // Min/max should have display: none in compact mode
+    });
+
+    it('should hide weather details in compact mode', () => {
+      renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={true}
+        />
+      );
+
+      const humidity = screen.queryByText('Humidity');
+      const wind = screen.queryByText('Wind');
+      const pressure = screen.queryByText('Pressure');
+      const visibility = screen.queryByText('Visibility');
+      
+      expect(humidity).toBeInTheDocument();
+      expect(wind).toBeInTheDocument();
+      expect(pressure).toBeInTheDocument();
+      expect(visibility).toBeInTheDocument();
+      // All details should have display: none in compact mode
+    });
+
+    it('should show all details in normal mode', () => {
+      renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={false}
+        />
+      );
+
+      expect(screen.getByText('scattered clouds')).toBeInTheDocument();
+      expect(screen.getByText(/Feels like/)).toBeInTheDocument();
+      expect(screen.getByText('Humidity')).toBeInTheDocument();
+      expect(screen.getByText('Wind')).toBeInTheDocument();
+    });
+
+    it('should render smaller icon in compact mode', () => {
+      const { container } = renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={true}
+        />
+      );
+
+      const icon = container.querySelector('img');
+      expect(icon).toBeInTheDocument();
+      expect(icon).toHaveAttribute('alt', 'Weather icon showing scattered clouds');
+    });
+
+    it('should render favorite button in compact mode', () => {
+      const mockToggle = vi.fn();
+      renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={true}
+          onFavoriteToggle={mockToggle}
+          isFavorite={false}
+        />
+      );
+
+      const favoriteButton = screen.getByRole('button', { name: /Add London to favorites/ });
+      expect(favoriteButton).toBeInTheDocument();
+    });
+
+    it('should handle favorite toggle in compact mode', async () => {
+      const user = userEvent.setup();
+      const mockToggle = vi.fn();
+      
+      renderWithTheme(
+        <WeatherCard
+          city="London"
+          weatherData={mockWeatherData}
+          unit="celsius"
+          compact={true}
+          onFavoriteToggle={mockToggle}
+          isFavorite={false}
+        />
+      );
+
+      const favoriteButton = screen.getByRole('button', { name: /Add London to favorites/ });
+      await user.click(favoriteButton);
+      
+      expect(mockToggle).toHaveBeenCalledTimes(1);
+    });
+  });

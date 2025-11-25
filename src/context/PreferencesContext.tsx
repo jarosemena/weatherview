@@ -1,13 +1,17 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { storageService } from '../services/storageService';
-import type { UserPreferences, TemperatureUnit } from '../types/preferences.types';
+import type { UserPreferences, TemperatureUnit, Theme, FavoriteCity } from '../types/preferences.types';
 
 interface PreferencesContextValue {
   favoriteCities: string[];
+  favoriteCitiesV2: FavoriteCity[];
   temperatureUnit: TemperatureUnit;
-  addFavorite: (city: string) => void;
+  theme: Theme;
+  addFavorite: (city: string, coordinates?: { lat: number; lon: number }) => void;
   removeFavorite: (city: string) => void;
   setTemperatureUnit: (unit: TemperatureUnit) => void;
+  toggleTheme: () => void;
+  getFavoriteCoordinates: (city: string) => { lat: number; lon: number } | undefined;
 }
 
 const PreferencesContext = createContext<PreferencesContextValue | undefined>(undefined);
@@ -16,7 +20,9 @@ const STORAGE_KEY = 'userPreferences';
 
 const defaultPreferences: UserPreferences = {
   favoriteCities: [],
-  temperatureUnit: 'celsius'
+  favoriteCitiesV2: [],
+  temperatureUnit: 'celsius',
+  theme: 'light'
 };
 
 interface PreferencesProviderProps {
@@ -34,14 +40,29 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
     storageService.set(STORAGE_KEY, preferences);
   }, [preferences]);
 
-  const addFavorite = useCallback((city: string) => {
+  const addFavorite = useCallback((city: string, coordinates?: { lat: number; lon: number }) => {
     setPreferences(prev => {
-      if (prev.favoriteCities.includes(city)) {
+      // Check if already exists in V2
+      const existsInV2 = prev.favoriteCitiesV2?.some(fav => fav.name === city);
+      if (existsInV2) {
         return prev;
       }
+
+      // Also maintain legacy format for backward compatibility
+      const favoriteCities = prev.favoriteCities.includes(city) 
+        ? prev.favoriteCities 
+        : [...prev.favoriteCities, city];
+
+      // Add to V2 format with coordinates
+      const favoriteCitiesV2 = [
+        ...(prev.favoriteCitiesV2 || []),
+        { name: city, coordinates }
+      ];
+
       return {
         ...prev,
-        favoriteCities: [...prev.favoriteCities, city]
+        favoriteCities,
+        favoriteCitiesV2
       };
     });
   }, []);
@@ -49,7 +70,8 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
   const removeFavorite = useCallback((city: string) => {
     setPreferences(prev => ({
       ...prev,
-      favoriteCities: prev.favoriteCities.filter(c => c !== city)
+      favoriteCities: prev.favoriteCities.filter(c => c !== city),
+      favoriteCitiesV2: (prev.favoriteCitiesV2 || []).filter(fav => fav.name !== city)
     }));
   }, []);
 
@@ -60,12 +82,28 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
     }));
   }, []);
 
+  const toggleTheme = useCallback(() => {
+    setPreferences(prev => ({
+      ...prev,
+      theme: prev.theme === 'light' ? 'dark' : 'light'
+    }));
+  }, []);
+
+  const getFavoriteCoordinates = useCallback((city: string) => {
+    const favorite = preferences.favoriteCitiesV2?.find(fav => fav.name === city);
+    return favorite?.coordinates;
+  }, [preferences.favoriteCitiesV2]);
+
   const value: PreferencesContextValue = {
     favoriteCities: preferences.favoriteCities,
+    favoriteCitiesV2: preferences.favoriteCitiesV2 || [],
     temperatureUnit: preferences.temperatureUnit,
+    theme: preferences.theme || 'light',
     addFavorite,
     removeFavorite,
-    setTemperatureUnit
+    setTemperatureUnit,
+    toggleTheme,
+    getFavoriteCoordinates
   };
 
   return (

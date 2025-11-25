@@ -12,7 +12,7 @@ interface WeatherContextValue {
   errorMessage: string | null;
   isUsingCache: boolean;
   fetchWeatherByCity: (city: string) => Promise<void>;
-  fetchWeatherByCoords: (lat: number, lon: number) => Promise<void>;
+  fetchWeatherByCoords: (lat: number, lon: number, preferredCityName?: string) => Promise<void>;
   refetch: () => void;
 }
 
@@ -24,7 +24,7 @@ interface WeatherProviderProps {
 
 export function WeatherProvider({ children }: WeatherProviderProps) {
   const [currentCity, setCurrentCity] = useState<string | null>(null);
-  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lon: number; preferredName?: string } | null>(null);
   const [isUsingCache, setIsUsingCache] = useState(false);
   const queryClient = useQueryClient();
 
@@ -43,7 +43,11 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
         return await weatherApi.getCurrentWeather(currentCity);
       }
       if (currentCoords) {
-        return await weatherApi.getCurrentWeatherByCoords(currentCoords.lat, currentCoords.lon);
+        return await weatherApi.getCurrentWeatherByCoords(
+          currentCoords.lat, 
+          currentCoords.lon, 
+          currentCoords.preferredName
+        );
       }
       return null;
     },
@@ -63,14 +67,19 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
     refetch: refetchForecast,
     isError: isForecastError
   } = useQuery({
-    queryKey: ['forecast', currentWeather?.city],
+    queryKey: ['forecast', currentWeather?.city, currentCoords],
     queryFn: async () => {
+      // If we have coordinates, use them for forecast
+      if (currentCoords) {
+        return await weatherApi.getForecastByCoords(currentCoords.lat, currentCoords.lon);
+      }
+      // Otherwise use city name
       if (currentWeather?.city) {
         return await weatherApi.getForecast(currentWeather.city, 5);
       }
       return [];
     },
-    enabled: !!currentWeather?.city,
+    enabled: !!(currentWeather?.city || currentCoords),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     retry: false,
@@ -91,8 +100,8 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
     setCurrentCoords(null);
   }, []);
 
-  const fetchWeatherByCoords = useCallback(async (lat: number, lon: number) => {
-    setCurrentCoords({ lat, lon });
+  const fetchWeatherByCoords = useCallback(async (lat: number, lon: number, preferredCityName?: string) => {
+    setCurrentCoords({ lat, lon, preferredName: preferredCityName });
     setCurrentCity(null);
   }, []);
 

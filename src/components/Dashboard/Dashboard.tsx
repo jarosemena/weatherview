@@ -1,16 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useWeatherData } from '../../hooks/useWeatherData';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 import { useMultipleCitiesWeather } from '../../hooks/useMultipleCitiesWeather';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { useToast } from '../../context/ToastContext';
 import { WeatherCard } from '../WeatherCard/WeatherCard';
 import { CitySearch } from '../CitySearch/CitySearch';
-import { ChartView } from '../ChartView/ChartView';
-import { CityComparison } from '../CityComparison/CityComparison';
+import { ThemeToggle } from '../ThemeToggle/ThemeToggle';
+import { NearbyCities } from '../NearbyCities/NearbyCities';
 import { ErrorMessage } from '../ErrorMessage/ErrorMessage';
+import { LoadingSpinner } from '../LoadingSpinner/LoadingSpinner';
 import type { City, ChartType, TimeRange } from '../../types/weather.types';
 import * as S from './Dashboard.styles';
+
+// Lazy load heavy components
+const ChartView = lazy(() => import('../ChartView/ChartView').then(module => ({ default: module.ChartView })));
+const CityComparison = lazy(() => import('../CityComparison/CityComparison').then(module => ({ default: module.CityComparison })));
 
 const DEFAULT_CITY = 'London';
 const MAX_RECENT_SEARCHES = 5;
@@ -19,18 +25,25 @@ const MAX_COMPARISON_CITIES = 4;
 export function Dashboard() {
   const { currentWeather, forecast, isLoading: isWeatherLoading, error: weatherError, errorMessage, isUsingCache, fetchWeatherByCity, fetchWeatherByCoords, refetch } = useWeatherData();
   const { coordinates, isLoading: isGeoLoading, error: geoError, requestLocation } = useGeolocation();
-  const { temperatureUnit, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit } = useUserPreferences();
+  const { temperatureUnit, theme, favoriteCities, addFavorite, removeFavorite, setTemperatureUnit, toggleTheme, getFavoriteCoordinates } = useUserPreferences();
   const { showWarning, showError, showInfo } = useToast();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [chartType, setChartType] = useState<ChartType>('temperature');
-  const [timeRange, setTimeRange] = useState<TimeRange>('7d');
+  const [timeRange, setTimeRange] = useState<TimeRange>('3d');
   const [isComparisonMode, setIsComparisonMode] = useState(false);
   const [comparisonCities, setComparisonCities] = useState<string[]>([]);
+  const [visibleFavoritesCount, setVisibleFavoritesCount] = useState(8); // Initial load: 8 cards (2 rows of 4)
   
   // Fetch data for comparison cities
   const comparisonData = useMultipleCitiesWeather(comparisonCities);
+  
+  // Fetch data for favorite cities - pass coordinate lookup function
+  const favoritesData = useMultipleCitiesWeather(favoriteCities, getFavoriteCoordinates);
+
+  // Debug log
+  console.log('Favorites:', favoriteCities.length, 'Data loaded:', favoritesData.filter(d => d.weather !== null).length);
 
   const handleToggleComparisonMode = () => {
     setIsComparisonMode(!isComparisonMode);
@@ -119,13 +132,45 @@ export function Dashboard() {
     if (isFavorite(city)) {
       removeFavorite(city);
     } else {
-      addFavorite(city);
+      // Pass coordinates if available from current weather
+      const coordinates = currentWeather?.city === city ? currentWeather.coordinates : undefined;
+      addFavorite(city, coordinates);
     }
   };
 
   const isFavorite = (city: string) => {
     return favoriteCities.includes(city);
   };
+
+  const handleNearbyCitySelect = (city: City) => {
+    fetchWeatherByCity(city.name);
+    setUseDefaultCity(false);
+  };
+
+  const handleFavoriteClick = (city: string) => {
+    // Try to use coordinates if available
+    const coordinates = getFavoriteCoordinates(city);
+    if (coordinates) {
+      console.log(`Fetching weather for ${city} using coordinates:`, coordinates);
+      // Pass the city name as preferred name to maintain consistency
+      fetchWeatherByCoords(coordinates.lat, coordinates.lon, city);
+    } else {
+      console.log(`Fetching weather for ${city} using city name`);
+      fetchWeatherByCity(city);
+    }
+  };
+
+  // Infinite scroll logic for favorites
+  const handleLoadMoreFavorites = () => {
+    setVisibleFavoritesCount(prev => Math.min(prev + 4, favoriteCities.length));
+  };
+
+  const hasMoreFavorites = visibleFavoritesCount < favoriteCities.length;
+  const sentinelRef = useInfiniteScroll({
+    onLoadMore: handleLoadMoreFavorites,
+    hasMore: hasMoreFavorites,
+    isLoading: favoritesData.some(city => city.isLoading)
+  });
 
   const isLoading = isGeoLoading || isWeatherLoading;
   const hasError = weatherError !== null;
@@ -155,11 +200,12 @@ export function Dashboard() {
                 °F
               </S.UnitButton>
             </S.UnitToggle>
+            <ThemeToggle currentTheme={theme} onToggle={toggleTheme} />
           </S.HeaderControls>
         </S.HeaderContent>
       </S.HeaderSection>
 
-      <S.ContentSection role="main">
+      <S.ContentSection role="main" id="main-content">
         <S.MainLayout>
           <S.MainContent>
             {isLoading && (
@@ -213,6 +259,51 @@ export function Dashboard() {
                       />
                     </S.WeatherSection>
 
+                    {/* Favorites Grid - Show when 2+ favorites */}
+                    {favoriteCities.length >= 2 && (
+                      <>
+                        <S.FavoritesGrid>
+                          {favoritesData
+                            .slice(0, visibleFavoritesCount)
+                            .filter((cityData) => cityData.weather !== null)
+                            .map((cityData) => (
+                              <WeatherCard
+                                key={cityData.city}
+                                city={cityData.city}
+                                weatherData={cityData.weather!}
+                                unit={temperatureUnit}
+                                onFavoriteToggle={() => handleFavoriteToggle(cityData.city)}
+                                isFavorite={true}
+                                compact={true}
+                                onClick={() => handleFavoriteClick(cityData.city)}
+                              />
+                            ))}
+                          {/* Show loading state for favorites being fetched */}
+                          {favoritesData.some(city => city.isLoading) && (
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px' }}>
+                              Loading favorites...
+                            </div>
+                          )}
+                        </S.FavoritesGrid>
+                        {/* Infinite scroll sentinel */}
+                        {hasMoreFavorites && (
+                          <div 
+                            ref={sentinelRef} 
+                            style={{ 
+                              height: '20px', 
+                              margin: '20px 0',
+                              textAlign: 'center',
+                              color: '#888',
+                              fontSize: '14px',
+                              fontStyle: 'italic'
+                            }}
+                          >
+                            Loading more favorites...
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     {forecast.length > 0 && (
                       <S.ChartSection>
                         <S.ChartControls>
@@ -244,42 +335,46 @@ export function Dashboard() {
                             <S.ControlLabel>Time Range</S.ControlLabel>
                             <S.ButtonGroup>
                               <S.ControlButton
-                                $active={timeRange === '24h'}
-                                onClick={() => setTimeRange('24h')}
+                                $active={timeRange === '1d'}
+                                onClick={() => setTimeRange('1d')}
                               >
-                                24h
+                                1d
                               </S.ControlButton>
                               <S.ControlButton
-                                $active={timeRange === '7d'}
-                                onClick={() => setTimeRange('7d')}
+                                $active={timeRange === '3d'}
+                                onClick={() => setTimeRange('3d')}
                               >
-                                7d
+                                3d
                               </S.ControlButton>
                               <S.ControlButton
-                                $active={timeRange === '30d'}
-                                onClick={() => setTimeRange('30d')}
+                                $active={timeRange === '5d'}
+                                onClick={() => setTimeRange('5d')}
                               >
-                                30d
+                                5d
                               </S.ControlButton>
                             </S.ButtonGroup>
                           </S.ControlGroup>
                         </S.ChartControls>
 
-                        <ChartView
-                          data={forecast}
-                          type={chartType}
-                          timeRange={timeRange}
-                        />
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <ChartView
+                            data={forecast}
+                            type={chartType}
+                            timeRange={timeRange}
+                          />
+                        </Suspense>
                       </S.ChartSection>
                     )}
                   </>
                 ) : (
                   <S.ComparisonSection>
-                    <CityComparison
-                      cities={comparisonCities}
-                      onRemoveCity={handleRemoveCityFromComparison}
-                      maxCities={MAX_COMPARISON_CITIES}
-                    />
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <CityComparison
+                        cities={comparisonCities}
+                        onRemoveCity={handleRemoveCityFromComparison}
+                        maxCities={MAX_COMPARISON_CITIES}
+                      />
+                    </Suspense>
 
                     {comparisonData.some(city => city.forecast.length > 0) && (
                       <S.ChartSection>
@@ -312,33 +407,35 @@ export function Dashboard() {
                             <S.ControlLabel>Time Range</S.ControlLabel>
                             <S.ButtonGroup>
                               <S.ControlButton
-                                $active={timeRange === '24h'}
-                                onClick={() => setTimeRange('24h')}
+                                $active={timeRange === '1d'}
+                                onClick={() => setTimeRange('1d')}
                               >
-                                24h
+                                1d
                               </S.ControlButton>
                               <S.ControlButton
-                                $active={timeRange === '7d'}
-                                onClick={() => setTimeRange('7d')}
+                                $active={timeRange === '3d'}
+                                onClick={() => setTimeRange('3d')}
                               >
-                                7d
+                                3d
                               </S.ControlButton>
                               <S.ControlButton
-                                $active={timeRange === '30d'}
-                                onClick={() => setTimeRange('30d')}
+                                $active={timeRange === '5d'}
+                                onClick={() => setTimeRange('5d')}
                               >
-                                30d
+                                5d
                               </S.ControlButton>
                             </S.ButtonGroup>
                           </S.ControlGroup>
                         </S.ChartControls>
 
-                        <ChartView
-                          data={comparisonData.map(city => city.forecast)}
-                          type={chartType}
-                          timeRange={timeRange}
-                          cities={comparisonCities}
-                        />
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <ChartView
+                            data={comparisonData.map(city => city.forecast)}
+                            type={chartType}
+                            timeRange={timeRange}
+                            cities={comparisonCities}
+                          />
+                        </Suspense>
                       </S.ChartSection>
                     )}
                   </S.ComparisonSection>
@@ -360,7 +457,7 @@ export function Dashboard() {
                 <S.FavoritesList>
                   {favoriteCities.map((city) => (
                     <S.FavoriteItem key={city}>
-                      <S.FavoriteName onClick={() => fetchWeatherByCity(city)}>
+                      <S.FavoriteName onClick={() => handleFavoriteClick(city)}>
                         {city}
                       </S.FavoriteName>
                       <S.RemoveFavoriteButton
@@ -374,6 +471,17 @@ export function Dashboard() {
                 </S.FavoritesList>
               )}
             </S.SidebarCard>
+
+            {/* Nearby Cities */}
+            {coordinates && !geoError && (
+              <S.SidebarCard>
+                <NearbyCities
+                  coordinates={coordinates}
+                  onCitySelect={handleNearbyCitySelect}
+                  radius={100}
+                />
+              </S.SidebarCard>
+            )}
           </S.SidebarSection>
         </S.MainLayout>
       </S.ContentSection>

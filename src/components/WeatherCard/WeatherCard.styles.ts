@@ -1,44 +1,68 @@
 import styled from 'styled-components';
 
-export const CardContainer = styled.div`
+export const CardContainer = styled.div<{ $compact?: boolean; $clickable?: boolean }>`
   background: ${({ theme }) => theme.colors.background.main};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.md};
-  padding: ${({ theme }) => theme.spacing.lg};
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: ${({ theme, $compact }) => $compact ? theme.spacing.md : theme.spacing.lg};
+  transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
+  animation: fadeInUp 0.5s ease-out;
+  cursor: ${({ $clickable }) => $clickable ? 'pointer' : 'default'};
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
+    ${({ $clickable, theme }) => $clickable && `
+      background: ${theme.colors.background.secondary};
+    `}
   }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     padding: ${({ theme }) => theme.spacing.md};
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    transition: none;
+  }
 `;
 
-export const CityHeader = styled.div`
+export const CityHeader = styled.div<{ $compact?: boolean }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme, $compact }) => $compact ? theme.spacing.sm : theme.spacing.md};
 `;
 
-export const CityName = styled.h2`
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+export const CityName = styled.h2<{ $compact?: boolean }>`
+  font-size: ${({ theme, $compact }) => 
+    $compact ? theme.typography.fontSize.md : theme.typography.fontSize.xl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    font-size: ${({ theme }) => theme.typography.fontSize.lg};
+    font-size: ${({ theme, $compact }) => 
+      $compact ? theme.typography.fontSize.sm : theme.typography.fontSize.lg};
   }
 `;
 
-export const FavoriteButton = styled.button<{ $isFavorite?: boolean }>`
+export const FavoriteButton = styled.button<{ $isFavorite?: boolean; $compact?: boolean }>`
   background: none;
   border: none;
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  font-size: ${({ theme, $compact }) => 
+    $compact ? theme.typography.fontSize.md : theme.typography.fontSize.xl};
   color: ${({ theme, $isFavorite }) => 
     $isFavorite ? theme.colors.warning : theme.colors.text.secondary};
   cursor: pointer;
@@ -56,53 +80,85 @@ export const FavoriteButton = styled.button<{ $isFavorite?: boolean }>`
   }
 `;
 
-export const WeatherIcon = styled.div`
+export const WeatherIcon = styled.div<{ $compact?: boolean }>`
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme, $compact }) => $compact ? theme.spacing.xs : theme.spacing.md};
 `;
 
-export const WeatherImage = styled.img`
-  width: 100px;
-  height: 100px;
+export const WeatherImage = styled.img<{ $compact?: boolean }>`
+  width: ${({ $compact }) => $compact ? '60px' : '100px'};
+  height: ${({ $compact }) => $compact ? '60px' : '100px'};
+  animation: float 3s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
-export const TemperatureDisplay = styled.div`
+export const TemperatureDisplay = styled.div<{ $compact?: boolean }>`
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme, $compact }) => $compact ? theme.spacing.sm : theme.spacing.lg};
 `;
 
-export const Temperature = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.xxl};
+export const Temperature = styled.div<{ $compact?: boolean }>`
+  font-size: ${({ theme, $compact }) => 
+    $compact ? theme.typography.fontSize.xl : theme.typography.fontSize.xxl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: ${({ theme }) => theme.spacing.xs};
+  animation: fadeIn 0.6s ease-out 0.2s both;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     font-size: ${({ theme }) => theme.typography.fontSize.xl};
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
-export const Conditions = styled.div`
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
+export const Conditions = styled.div<{ $compact?: boolean }>`
+  font-size: ${({ theme, $compact }) => 
+    $compact ? theme.typography.fontSize.sm : theme.typography.fontSize.lg};
   color: ${({ theme }) => theme.colors.text.primary};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   text-transform: capitalize;
 `;
 
-export const Description = styled.div`
+export const Description = styled.div<{ $compact?: boolean }>`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
   text-transform: capitalize;
+  display: ${({ $compact }) => $compact ? 'none' : 'block'};
 `;
 
-export const FeelsLike = styled.div`
+export const FeelsLike = styled.div<{ $compact?: boolean }>`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   color: ${({ theme }) => theme.colors.text.secondary};
   margin-top: ${({ theme }) => theme.spacing.xs};
+  display: ${({ $compact }) => $compact ? 'none' : 'block'};
 `;
 
-export const WeatherDetails = styled.div`
-  display: grid;
+export const WeatherDetails = styled.div<{ $compact?: boolean }>`
+  display: ${({ $compact }) => $compact ? 'none' : 'grid'};
   grid-template-columns: repeat(2, 1fr);
   gap: ${({ theme }) => theme.spacing.md};
   padding-top: ${({ theme }) => theme.spacing.md};
@@ -133,8 +189,8 @@ export const DetailValue = styled.span`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
-export const MinMaxTemp = styled.div`
-  display: flex;
+export const MinMaxTemp = styled.div<{ $compact?: boolean }>`
+  display: ${({ $compact }) => $compact ? 'none' : 'flex'};
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.md};
   margin-top: ${({ theme }) => theme.spacing.sm};

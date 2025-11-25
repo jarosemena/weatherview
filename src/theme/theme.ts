@@ -1,4 +1,4 @@
-export const theme = {
+export const lightTheme = {
   colors: {
     primary: '#2196F3',
     secondary: '#FFC107',
@@ -8,7 +8,7 @@ export const theme = {
     background: {
       main: '#FFFFFF',
       secondary: '#F5F5F5',
-      dark: '#212121'
+      card: '#FFFFFF'
     },
     text: {
       primary: '#212121',
@@ -23,7 +23,38 @@ export const theme = {
     lg: '24px',
     xl: '32px',
     xxl: '48px'
+  }
+};
+
+export const darkTheme = {
+  colors: {
+    primary: '#64B5F6',
+    secondary: '#FFD54F',
+    success: '#81C784',
+    error: '#E57373',
+    warning: '#FFB74D',
+    background: {
+      main: '#121212',
+      secondary: '#1E1E1E',
+      card: '#2C2C2C'
+    },
+    text: {
+      primary: '#FFFFFF',
+      secondary: '#B0B0B0',
+      disabled: '#666666'
+    }
   },
+  spacing: {
+    xs: '4px',
+    sm: '8px',
+    md: '16px',
+    lg: '24px',
+    xl: '32px',
+    xxl: '48px'
+  }
+};
+
+export const commonTheme = {
   breakpoints: {
     mobile: '320px',
     tablet: '768px',
@@ -60,4 +91,13 @@ export const theme = {
   }
 };
 
-export type Theme = typeof theme;
+// Función helper para obtener el tema actual
+export const getTheme = (mode: 'light' | 'dark') => ({
+  ...(mode === 'light' ? lightTheme : darkTheme),
+  ...commonTheme
+});
+
+// Mantener compatibilidad con código existente
+export const theme = getTheme('light');
+
+export type Theme = ReturnType<typeof getTheme>;

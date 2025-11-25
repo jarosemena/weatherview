@@ -78,7 +78,7 @@ export const UnitButton = styled.button<{ $active: boolean }>`
 
   &:hover {
     background: ${({ theme, $active }) => 
-      $active ? theme.colors.primary : theme.colors.background.dark}22;
+      $active ? theme.colors.primary : theme.colors.background.secondary}22;
   }
 
   &:focus {
@@ -322,7 +322,7 @@ export const ModeToggle = styled.button<{ $active: boolean }>`
   background: ${({ theme, $active }) => 
     $active ? theme.colors.secondary : theme.colors.background.main};
   color: ${({ theme, $active }) => 
-    $active ? theme.colors.background.dark : theme.colors.text.primary};
+    $active ? theme.colors.background.secondary : theme.colors.text.primary};
   border: 2px solid ${({ theme }) => theme.colors.secondary};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
   border-radius: ${({ theme }) => theme.borderRadius.md};
@@ -334,7 +334,7 @@ export const ModeToggle = styled.button<{ $active: boolean }>`
 
   &:hover {
     background: ${({ theme }) => theme.colors.secondary};
-    color: ${({ theme }) => theme.colors.background.dark};
+    color: ${({ theme }) => theme.colors.background.secondary};
     transform: translateY(-2px);
   }
 

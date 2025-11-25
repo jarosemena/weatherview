@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { storageService } from '../services/storageService';
 import type { UserPreferences, TemperatureUnit, Theme, FavoriteCity } from '../types/preferences.types';
 

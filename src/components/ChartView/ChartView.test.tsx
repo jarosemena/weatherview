@@ -68,7 +68,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="temperature"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 
@@ -80,7 +80,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="precipitation"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 
@@ -92,7 +92,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="wind"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 
@@ -104,7 +104,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="temperature"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 
@@ -116,11 +116,11 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="temperature"
-        timeRange="24h"
+        timeRange="1d"
       />
     );
 
-    expect(screen.getByText(/24h/i)).toBeInTheDocument();
+    expect(screen.getByText(/1d/i)).toBeInTheDocument();
   });
 
   it('should render legend when multiple cities provided', () => {
@@ -128,7 +128,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="temperature"
-        timeRange="7d"
+        timeRange="5d"
         cities={['London', 'Paris']}
       />
     );
@@ -142,7 +142,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="temperature"
-        timeRange="7d"
+        timeRange="5d"
         cities={['London']}
       />
     );
@@ -157,7 +157,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="temperature"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 
@@ -171,7 +171,7 @@ describe('ChartView', () => {
       <ChartView
         data={[]}
         type="temperature"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 
@@ -183,7 +183,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="temperature"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 
@@ -195,7 +195,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="precipitation"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 
@@ -207,7 +207,7 @@ describe('ChartView', () => {
       <ChartView
         data={mockForecastData}
         type="wind"
-        timeRange="7d"
+        timeRange="5d"
       />
     );
 

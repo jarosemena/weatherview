@@ -260,6 +260,7 @@ export function Dashboard() {
                                 onFavoriteToggle={() => handleFavoriteToggle(cityData.city)}
                                 isFavorite={true}
                                 compact={true}
+                                onClick={() => fetchWeatherByCity(cityData.city)}
                               />
                             ))}
                           {/* Show loading state for favorites being fetched */}

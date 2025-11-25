@@ -10,6 +10,7 @@ export interface WeatherCardProps {
   onFavoriteToggle?: () => void;
   isFavorite?: boolean;
   compact?: boolean;
+  onClick?: () => void;
 }
 
 export function WeatherCard({
@@ -18,6 +19,7 @@ export function WeatherCard({
   unit,
   onFavoriteToggle,
   isFavorite = false,
+  onClick,
   compact = false
 }: WeatherCardProps) {
   const convertTemp = (temp: number) => {
@@ -32,7 +34,14 @@ export function WeatherCard({
   const iconUrl = `https://openweathermap.org/img/wn/${weatherData.conditions.icon}@2x.png`;
 
   return (
-    <S.CardContainer $compact={compact} role="article" aria-label={`Weather information for ${weatherData.city}`}>
+    <S.CardContainer 
+      $compact={compact} 
+      $clickable={!!onClick}
+      onClick={onClick}
+      role="article" 
+      aria-label={`Weather information for ${weatherData.city}`}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+    >
       <S.CityHeader $compact={compact}>
         <S.CityName $compact={compact}>{weatherData.city}, {weatherData.country}</S.CityName>
         {onFavoriteToggle && (

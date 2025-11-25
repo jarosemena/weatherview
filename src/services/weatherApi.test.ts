@@ -219,7 +219,7 @@ describe('weatherApi', () => {
         .mockResolvedValueOnce(mockGeoResponse)
         .mockResolvedValueOnce(mockForecastResponse);
 
-      const result = await weatherApi.getForecast('London', 5);
+      const result = await weatherApi.getForecast('London');
 
       expect(result).toHaveLength(2);
       expect(result[0].date).toBe('2023-11-15');

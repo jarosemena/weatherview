@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { weatherApi } from '../services/weatherApi';
 import { getErrorMessage } from '../utils/retryWithBackoff';
 import type { WeatherData, ForecastData } from '../types/weather.types';
@@ -73,7 +73,7 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
       }
       // Otherwise use city name
       if (currentWeather?.city) {
-        return await weatherApi.getForecast(currentWeather.city, 5);
+        return await weatherApi.getForecast(currentWeather.city);
       }
       return [];
     },

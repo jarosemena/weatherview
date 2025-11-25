@@ -42,7 +42,7 @@ export function useMultipleCitiesWeather(
   const forecastQueries = useQueries({
     queries: cities.map(city => ({
       queryKey: ['forecast', city],
-      queryFn: () => weatherApi.getForecast(city, 5),
+      queryFn: () => weatherApi.getForecast(city),
       staleTime: 5 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
       enabled: !!city

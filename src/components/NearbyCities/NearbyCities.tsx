@@ -6,21 +6,19 @@ import * as S from './NearbyCities.styles';
 export interface NearbyCitiesProps {
   coordinates: { lat: number; lon: number };
   onCitySelect: (city: City) => void;
-  radius?: number;
 }
 
 export const NearbyCities: React.FC<NearbyCitiesProps> = ({
   coordinates,
-  onCitySelect,
-  radius = 100
+  onCitySelect
 }) => {
   const { nearbyCities, isLoading, error, fetchNearbyCities } = useNearbyCities();
 
   useEffect(() => {
     if (coordinates) {
-      fetchNearbyCities(coordinates, radius);
+      fetchNearbyCities(coordinates);
     }
-  }, [coordinates, radius, fetchNearbyCities]);
+  }, [coordinates, fetchNearbyCities]);
 
   const handleCityClick = (city: City & { distance: number }) => {
     const { distance, ...cityData } = city;

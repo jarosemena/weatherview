@@ -42,7 +42,7 @@ describe('useNearbyCities', () => {
     const { result } = renderHook(() => useNearbyCities());
 
     await act(async () => {
-      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 }, 100);
+      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 });
     });
 
     await waitFor(() => {
@@ -51,7 +51,7 @@ describe('useNearbyCities', () => {
 
     expect(result.current.nearbyCities).toEqual(mockCities);
     expect(result.current.error).toBeNull();
-    expect(weatherApi.getNearbyCities).toHaveBeenCalledWith(51.5074, -0.1278, 100);
+    expect(weatherApi.getNearbyCities).toHaveBeenCalledWith(51.5074, -0.1278);
   });
 
   it('should set loading to false after fetch completes', async () => {
@@ -72,7 +72,7 @@ describe('useNearbyCities', () => {
     expect(result.current.isLoading).toBe(false);
 
     await act(async () => {
-      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 }, 100);
+      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 });
     });
 
     expect(result.current.isLoading).toBe(false);
@@ -85,7 +85,7 @@ describe('useNearbyCities', () => {
     const { result } = renderHook(() => useNearbyCities());
 
     await act(async () => {
-      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 }, 100);
+      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 });
     });
 
     await waitFor(() => {
@@ -113,7 +113,7 @@ describe('useNearbyCities', () => {
 
     // First call
     await act(async () => {
-      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 }, 100);
+      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 });
     });
 
     await waitFor(() => {
@@ -124,7 +124,7 @@ describe('useNearbyCities', () => {
 
     // Second call with same location (should use cache)
     await act(async () => {
-      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 }, 100);
+      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 });
     });
 
     // Should still be called only once (cache hit)
@@ -161,7 +161,7 @@ describe('useNearbyCities', () => {
 
     // First location
     await act(async () => {
-      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 }, 100);
+      await result.current.fetchNearbyCities({ lat: 51.5074, lon: -0.1278 });
     });
 
     await waitFor(() => {
@@ -172,7 +172,7 @@ describe('useNearbyCities', () => {
 
     // Different location (should fetch new data)
     await act(async () => {
-      await result.current.fetchNearbyCities({ lat: 48.8566, lon: 2.3522 }, 100);
+      await result.current.fetchNearbyCities({ lat: 48.8566, lon: 2.3522 });
     });
 
     await waitFor(() => {

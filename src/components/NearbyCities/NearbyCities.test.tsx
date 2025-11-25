@@ -176,10 +176,9 @@ describe('NearbyCities', () => {
       <NearbyCities
         coordinates={mockCoordinates}
         onCitySelect={mockOnCitySelect}
-        radius={50}
       />
     );
 
-    expect(mockFetch).toHaveBeenCalledWith(mockCoordinates, 50);
+    expect(mockFetch).toHaveBeenCalledWith(mockCoordinates);
   });
 });

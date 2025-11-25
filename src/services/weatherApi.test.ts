@@ -306,7 +306,7 @@ describe('weatherApi', () => {
       mockedAxios.get.mockResolvedValueOnce(mockResponse);
 
       // Use coordinates near London but not exactly matching
-      const result = await weatherApi.getNearbyCities(51.5, -0.1, 100);
+      const result = await weatherApi.getNearbyCities(51.5, -0.1);
 
       expect(result.length).toBeGreaterThan(0);
       expect(result[0]).toHaveProperty('distance');
@@ -318,17 +318,16 @@ describe('weatherApi', () => {
         expect(result[i].distance).toBeGreaterThanOrEqual(result[i - 1].distance);
       }
       
-      // Verify all within radius and greater than 0 (exact location excluded)
+      // Verify all have valid distances
       result.forEach(city => {
-        expect(city.distance).toBeLessThanOrEqual(100);
-        expect(city.distance).toBeGreaterThan(0);
+        expect(city.distance).toBeGreaterThanOrEqual(0);
       });
     });
 
     it('should return empty array when no cities found', async () => {
       mockedAxios.get.mockResolvedValueOnce({ data: { results: [] } });
 
-      const result = await weatherApi.getNearbyCities(0, 0, 100);
+      const result = await weatherApi.getNearbyCities(0, 0);
 
       expect(result).toEqual([]);
     });
@@ -357,18 +356,22 @@ describe('weatherApi', () => {
 
       mockedAxios.get.mockResolvedValueOnce(mockResponse);
 
-      const result = await weatherApi.getNearbyCities(51.5074, -0.1278, 50);
+      const result = await weatherApi.getNearbyCities(51.5074, -0.1278);
 
-      // Far City (Paris) should be filtered out as it's > 300km away
-      expect(result.every(city => city.distance <= 50)).toBe(true);
+      // Should return the 10 nearest cities
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.length).toBeLessThanOrEqual(10);
+      // Should include London itself (distance 0)
+      expect(result.some(city => city.name === 'London' && city.distance === 0)).toBe(true);
     });
 
-    it('should return empty array when no cities within radius', async () => {
-      // Use coordinates in the middle of the ocean with a very small radius
-      const result = await weatherApi.getNearbyCities(0, 0, 10);
+    it('should return nearest cities even for remote locations', async () => {
+      // Use coordinates in the middle of the ocean
+      const result = await weatherApi.getNearbyCities(0, 0);
 
-      // Should return empty array since no cities are within 10km of 0,0
-      expect(result).toEqual([]);
+      // Should still return the 10 nearest cities (ignoring radius)
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.length).toBeLessThanOrEqual(10);
     });
   });
 });

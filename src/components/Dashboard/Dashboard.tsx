@@ -42,6 +42,9 @@ export function Dashboard() {
   // Fetch data for favorite cities
   const favoritesData = useMultipleCitiesWeather(favoriteCities);
 
+  // Debug log
+  console.log('Favorites:', favoriteCities.length, 'Data loaded:', favoritesData.filter(d => d.weather !== null).length);
+
   const handleToggleComparisonMode = () => {
     setIsComparisonMode(!isComparisonMode);
     if (!isComparisonMode && currentWeather) {
@@ -242,7 +245,7 @@ export function Dashboard() {
                     </S.WeatherSection>
 
                     {/* Favorites Grid - Show when 2+ favorites */}
-                    {favoriteCities.length >= 2 && favoritesData.length > 0 && (
+                    {favoriteCities.length >= 2 && (
                       <>
                         <S.FavoritesGrid>
                           {favoritesData
@@ -259,6 +262,12 @@ export function Dashboard() {
                                 compact={true}
                               />
                             ))}
+                          {/* Show loading state for favorites being fetched */}
+                          {favoritesData.some(city => city.isLoading) && (
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '20px' }}>
+                              Loading favorites...
+                            </div>
+                          )}
                         </S.FavoritesGrid>
                         {/* Infinite scroll sentinel */}
                         {hasMoreFavorites && (

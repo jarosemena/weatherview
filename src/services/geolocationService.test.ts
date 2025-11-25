@@ -41,7 +41,7 @@ describe('geolocationService', () => {
       };
 
       const mockGeolocation = {
-        getCurrentPosition: vi.fn((success, error) => {
+        getCurrentPosition: vi.fn((_success, error) => {
           error(mockError);
         })
       };
@@ -62,7 +62,7 @@ describe('geolocationService', () => {
       };
 
       const mockGeolocation = {
-        getCurrentPosition: vi.fn((success, error) => {
+        getCurrentPosition: vi.fn((_success, error) => {
           error(mockError);
         })
       };
@@ -83,7 +83,7 @@ describe('geolocationService', () => {
       };
 
       const mockGeolocation = {
-        getCurrentPosition: vi.fn((success, error) => {
+        getCurrentPosition: vi.fn((_success, error) => {
           // Simulate timeout by calling error callback
           setTimeout(() => error(mockError), 50);
         })
@@ -104,7 +104,7 @@ describe('geolocationService', () => {
       };
 
       const mockGeolocation = {
-        getCurrentPosition: vi.fn((success, error, options) => {
+        getCurrentPosition: vi.fn((success, _error, options) => {
           expect(options?.timeout).toBe(3000);
           success(mockPosition);
         })

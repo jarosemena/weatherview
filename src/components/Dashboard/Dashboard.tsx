@@ -29,7 +29,7 @@ export function Dashboard() {
   const { showWarning, showError, showInfo } = useToast();
   const [locationAttempted, setLocationAttempted] = useState(false);
   const [useDefaultCity, setUseDefaultCity] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [, setRecentSearches] = useState<string[]>([]);
   const [chartType, setChartType] = useState<ChartType>('temperature');
   const [timeRange, setTimeRange] = useState<TimeRange>('3d');
   const [isComparisonMode, setIsComparisonMode] = useState(false);

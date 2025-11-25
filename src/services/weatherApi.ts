@@ -227,7 +227,6 @@ async function getCurrentWeatherByCoords(
     // Use preferred city name if provided, otherwise try reverse geocoding
     let cityName = preferredCityName || 'Current Location';
     let country = '';
-    let countryName = '';
     
     // Only do reverse geocoding if no preferred name was provided
     if (!preferredCityName) {
@@ -252,7 +251,6 @@ async function getCurrentWeatherByCoords(
           cityName = address.city || address.town || address.village || address.municipality || 
                      address.county || address.state_district || address.state || 'Current Location';
           country = address.country_code?.toUpperCase() || '';
-          countryName = address.country || '';
           
           // Log for debugging
           console.log('Reverse geocoding result:', { cityName, country, fullAddress: address });
@@ -286,7 +284,6 @@ async function getCurrentWeatherByCoords(
       if (reverseGeoResponse.data && reverseGeoResponse.data.address) {
         const address = reverseGeoResponse.data.address;
         const countryName = address.country || '';
-        const stateName = address.state || '';
         
         // Try to find a nearby city or use capital
         let fallbackCity = address.city || address.town || address.state || countryName;
@@ -307,7 +304,7 @@ async function getCurrentWeatherByCoords(
   }
 }
 
-async function getForecast(city: string, days: number): Promise<ForecastData[]> {
+async function getForecast(city: string): Promise<ForecastData[]> {
   try {
     // First, get coordinates for the city
     const geoResponse = await axios.get<GeoResponse>(`${GEO_URL}/search`, {

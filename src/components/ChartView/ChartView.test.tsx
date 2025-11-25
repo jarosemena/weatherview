@@ -1,19 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ThemeProvider } from 'styled-components';
-import userEvent from '@testing-library/user-event';
 import { ChartView } from './ChartView';
 import { theme } from '../../theme/theme';
 import type { ForecastData } from '../../types/weather.types';
 
 // Mock Chart.js
 vi.mock('react-chartjs-2', () => ({
-  Line: ({ data, options }: any) => (
+  Line: ({ data }: any) => (
     <div data-testid="line-chart" data-chart-type="line">
       {data.labels.join(',')}
     </div>
   ),
-  Bar: ({ data, options }: any) => (
+  Bar: ({ data }: any) => (
     <div data-testid="bar-chart" data-chart-type="bar">
       {data.labels.join(',')}
     </div>

@@ -14,7 +14,6 @@ export interface WeatherCardProps {
 }
 
 export function WeatherCard({
-  city,
   weatherData,
   unit,
   onFavoriteToggle,

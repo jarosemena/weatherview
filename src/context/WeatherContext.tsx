@@ -26,7 +26,6 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
   const [currentCity, setCurrentCity] = useState<string | null>(null);
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lon: number; preferredName?: string } | null>(null);
   const [isUsingCache, setIsUsingCache] = useState(false);
-  const queryClient = useQueryClient();
 
   // Query for current weather
   const {
@@ -64,8 +63,7 @@ export function WeatherProvider({ children }: WeatherProviderProps) {
     data: forecast = [],
     isLoading: isLoadingForecast,
     error: forecastError,
-    refetch: refetchForecast,
-    isError: isForecastError
+    refetch: refetchForecast
   } = useQuery({
     queryKey: ['forecast', currentWeather?.city, currentCoords],
     queryFn: async () => {

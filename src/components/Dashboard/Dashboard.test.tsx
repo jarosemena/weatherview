@@ -92,7 +92,7 @@ describe('Dashboard', () => {
     renderWithProviders(<Dashboard />);
 
     await waitFor(() => {
-      expect(weatherApi.getCurrentWeatherByCoords).toHaveBeenCalledWith(51.5074, -0.1278);
+      expect(weatherApi.getCurrentWeatherByCoords).toHaveBeenCalledWith(51.5074, -0.1278, undefined);
     });
   });
 
@@ -141,6 +141,7 @@ describe('Dashboard', () => {
     });
     vi.mocked(weatherApi.getCurrentWeatherByCoords).mockResolvedValue(mockWeatherData);
     vi.mocked(weatherApi.getForecast).mockResolvedValue([]);
+    vi.mocked(weatherApi.getForecastByCoords).mockResolvedValue([]);
 
     renderWithProviders(<Dashboard />);
 

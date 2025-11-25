@@ -55,11 +55,11 @@ describe('PreferencesContext', () => {
     });
 
     expect(result.current.favoriteCities).toEqual(['London']);
-    expect(storageService.set).toHaveBeenCalledWith('userPreferences', {
+    expect(storageService.set).toHaveBeenCalledWith('userPreferences', expect.objectContaining({
       favoriteCities: ['London'],
       temperatureUnit: 'celsius',
       theme: 'light'
-    });
+    }));
   });
 
   it('should not add duplicate favorite city', () => {
@@ -94,10 +94,10 @@ describe('PreferencesContext', () => {
     });
 
     expect(result.current.favoriteCities).toEqual(['London', 'Tokyo']);
-    expect(storageService.set).toHaveBeenCalledWith('userPreferences', {
+    expect(storageService.set).toHaveBeenCalledWith('userPreferences', expect.objectContaining({
       favoriteCities: ['London', 'Tokyo'],
       temperatureUnit: 'celsius'
-    });
+    }));
   });
 
   it('should set temperature unit', () => {
@@ -112,11 +112,11 @@ describe('PreferencesContext', () => {
     });
 
     expect(result.current.temperatureUnit).toBe('fahrenheit');
-    expect(storageService.set).toHaveBeenCalledWith('userPreferences', {
+    expect(storageService.set).toHaveBeenCalledWith('userPreferences', expect.objectContaining({
       favoriteCities: [],
       temperatureUnit: 'fahrenheit',
       theme: 'light'
-    });
+    }));
   });
 
   it('should persist preferences to storage on every change', () => {

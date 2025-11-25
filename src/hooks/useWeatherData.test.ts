@@ -81,7 +81,7 @@ describe('useWeatherData', () => {
 
   it('should fetch weather by coordinates', async () => {
     vi.mocked(weatherApi.getCurrentWeatherByCoords).mockResolvedValue(mockWeatherData);
-    vi.mocked(weatherApi.getForecast).mockResolvedValue(mockForecastData);
+    vi.mocked(weatherApi.getForecastByCoords).mockResolvedValue(mockForecastData);
 
     const { result } = renderHook(() => useWeatherData(), { wrapper });
 
@@ -92,7 +92,7 @@ describe('useWeatherData', () => {
       expect(result.current.forecast).toEqual(mockForecastData);
     });
 
-    expect(weatherApi.getCurrentWeatherByCoords).toHaveBeenCalledWith(51.5074, -0.1278);
+    expect(weatherApi.getCurrentWeatherByCoords).toHaveBeenCalledWith(51.5074, -0.1278, undefined);
   });
 
   it('should handle loading state', async () => {

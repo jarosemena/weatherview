@@ -81,7 +81,7 @@ describe('WeatherContext', () => {
 
   it('should fetch weather by coordinates', async () => {
     vi.mocked(weatherApi.getCurrentWeatherByCoords).mockResolvedValue(mockWeatherData);
-    vi.mocked(weatherApi.getForecast).mockResolvedValue(mockForecastData);
+    vi.mocked(weatherApi.getForecastByCoords).mockResolvedValue(mockForecastData);
 
     const { result } = renderHook(() => useWeatherContext(), {
       wrapper: createWrapper()

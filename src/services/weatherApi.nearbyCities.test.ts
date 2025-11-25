@@ -21,35 +21,12 @@ describe('weatherApi - Nearby Cities Property Tests', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          // Generate valid latitude (-90 to 90)
-          fc.double({ min: -90, max: 90 }),
-          // Generate valid longitude (-180 to 180)
-          fc.double({ min: -180, max: 180 }),
+          // Generate valid latitude (-90 to 90), excluding NaN and Infinity
+          fc.double({ min: -90, max: 90, noNaN: true }).filter(n => isFinite(n)),
+          // Generate valid longitude (-180 to 180), excluding NaN and Infinity
+          fc.double({ min: -180, max: 180, noNaN: true }).filter(n => isFinite(n)),
           async (lat, lon) => {
-            // Mock response with some cities
-            const mockResponse = {
-              data: {
-                results: [
-                  {
-                    name: 'City A',
-                    country: 'US',
-                    admin1: 'State',
-                    latitude: lat + 0.1,
-                    longitude: lon + 0.1
-                  },
-                  {
-                    name: 'City B',
-                    country: 'US',
-                    admin1: 'State',
-                    latitude: lat + 0.2,
-                    longitude: lon + 0.2
-                  }
-                ]
-              }
-            };
-
-            mockedAxios.get.mockResolvedValueOnce(mockResponse);
-
+            // getNearbyCities uses hardcoded list, no need to mock axios
             const result = await weatherApi.getNearbyCities(lat, lon, 100);
 
             // Property: For any valid coordinates, we should get a list (possibly empty)
@@ -63,9 +40,8 @@ describe('weatherApi - Nearby Cities Property Tests', () => {
               expect(city).toHaveProperty('distance');
               expect(typeof city.distance).toBe('number');
               expect(city.distance).toBeGreaterThanOrEqual(0);
+              expect(isFinite(city.distance)).toBe(true);
             });
-
-            vi.clearAllMocks();
           }
         ),
         { numRuns: 20 }
@@ -85,48 +61,11 @@ describe('weatherApi - Nearby Cities Property Tests', () => {
 
       await fc.assert(
         fc.asyncProperty(
-          fc.double({ min: -90, max: 90 }),
-          fc.double({ min: -180, max: 180 }),
-          fc.integer({ min: 10, max: 200 }),
+          fc.double({ min: -90, max: 90, noNaN: true }).filter(n => isFinite(n)),
+          fc.double({ min: -180, max: 180, noNaN: true }).filter(n => isFinite(n)),
+          fc.integer({ min: 50, max: 20000 }), // Reasonable radius range in km
           async (lat, lon, radius) => {
-            // Generate cities at various distances
-            const mockResponse = {
-              data: {
-                results: [
-                  {
-                    name: 'Very Close City',
-                    country: 'US',
-                    admin1: 'State',
-                    latitude: lat + 0.01,
-                    longitude: lon + 0.01
-                  },
-                  {
-                    name: 'Close City',
-                    country: 'US',
-                    admin1: 'State',
-                    latitude: lat + 0.1,
-                    longitude: lon + 0.1
-                  },
-                  {
-                    name: 'Medium City',
-                    country: 'US',
-                    admin1: 'State',
-                    latitude: lat + 0.5,
-                    longitude: lon + 0.5
-                  },
-                  {
-                    name: 'Far City',
-                    country: 'US',
-                    admin1: 'State',
-                    latitude: lat + 2,
-                    longitude: lon + 2
-                  }
-                ]
-              }
-            };
-
-            mockedAxios.get.mockResolvedValueOnce(mockResponse);
-
+            // getNearbyCities uses hardcoded list, no need to mock
             const result = await weatherApi.getNearbyCities(lat, lon, radius);
 
             // Property 1: All cities should be within the specified radius

@@ -505,8 +505,9 @@ async function getNearbyCities(
           distance
         };
       })
+      .filter((city) => city.distance > 0 && city.distance <= radius) // Filter by radius and exclude exact location
       .sort((a, b) => a.distance - b.distance) // Sort by distance ascending
-      .slice(0, 10); // Get the 10 nearest cities
+      .slice(0, 10); // Get the 10 nearest cities within radius
 
     console.log('Nearby cities found:', citiesWithDistance.length, 'for location:', lat, lon);
     console.log('Nearest city:', citiesWithDistance[0]?.name, citiesWithDistance[0]?.distance, 'km');

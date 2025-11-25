@@ -45,7 +45,7 @@ export const NearbyCities: React.FC<NearbyCitiesProps> = ({
     );
   }
 
-  if (nearbyCities.length === 0) {
+  if (!nearbyCities || nearbyCities.length === 0) {
     return (
       <S.CitiesContainer>
         <S.Title>Nearby Cities</S.Title>

@@ -48,27 +48,35 @@ export function ChartView({ data, type, timeRange, cities = [] }: ChartViewProps
 
   // Filter data based on timeRange
   const filterDataByTimeRange = (forecastData: ForecastData[]): ForecastData[] => {
+    if (!forecastData || forecastData.length === 0) {
+      return forecastData;
+    }
+    
     const now = new Date();
-    let maxDate: Date;
+    now.setHours(0, 0, 0, 0); // Start of today
+    let maxDays: number;
     
     switch (timeRange) {
       case '24h':
-        maxDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        maxDays = 1;
         break;
       case '7d':
-        maxDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        maxDays = 7;
         break;
       case '30d':
-        maxDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        maxDays = 30;
         break;
       default:
         return forecastData;
     }
     
-    return forecastData.filter(item => {
-      const itemDate = new Date(item.date);
-      return itemDate <= maxDate;
-    });
+    // If we have less data than requested, return all data
+    if (forecastData.length <= maxDays) {
+      return forecastData;
+    }
+    
+    // Otherwise, limit to the requested number of days
+    return forecastData.slice(0, maxDays);
   };
 
   // Apply filtering

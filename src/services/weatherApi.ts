@@ -244,9 +244,15 @@ async function getCurrentWeatherByCoords(
 
       if (reverseGeoResponse.data && reverseGeoResponse.data.address) {
         const address = reverseGeoResponse.data.address;
-        cityName = address.city || address.town || address.village || address.county || address.state || 'Current Location';
+        // Prioritize actual city names over regions/states
+        // Only use county/state as last resort
+        cityName = address.city || address.town || address.village || address.municipality || 
+                   address.county || address.state_district || address.state || 'Current Location';
         country = address.country_code?.toUpperCase() || '';
         countryName = address.country || '';
+        
+        // Log for debugging
+        console.log('Reverse geocoding result:', { cityName, country, fullAddress: address });
       }
     } catch (geoError) {
       console.warn('Reverse geocoding failed, using default location name');
